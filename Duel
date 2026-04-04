@@ -146,11 +146,11 @@ local function getEffectiveWPs(wps, offsets)
 	return result
 end
 local C = {
-	BG     = Color3.fromRGB(10,10,12), CARD   = Color3.fromRGB(22,22,26),
-	CARD2  = Color3.fromRGB(30,30,36), RED    = Color3.fromRGB(220,220,220),
-	RED2   = Color3.fromRGB(255,255,255), WHITE  = Color3.fromRGB(240,240,240),
-	DIM    = Color3.fromRGB(120,120,130), BORDER = Color3.fromRGB(70,70,78),
-	ON_BG  = Color3.fromRGB(40,40,46), MOB_ON = Color3.fromRGB(50,50,58),
+	BG     = Color3.fromRGB(12,5,20), CARD   = Color3.fromRGB(25,8,40),
+	CARD2  = Color3.fromRGB(35,12,55), RED    = Color3.fromRGB(180,0,255),
+	RED2   = Color3.fromRGB(220,80,255), WHITE  = Color3.fromRGB(230,200,255),
+	DIM    = Color3.fromRGB(130,80,160), BORDER = Color3.fromRGB(120,0,200),
+	ON_BG  = Color3.fromRGB(60,10,90), MOB_ON = Color3.fromRGB(70,15,110),
 	ORANGE = Color3.fromRGB(220,130,30), ORANGE_BG = Color3.fromRGB(35,18,4),
 }
 local DEFAULT_MOB_BTNS = {
@@ -284,7 +284,7 @@ UIS.JumpRequest:Connect(function()
 	if not G.floatEnabled or not G.FLOAT_TARGET_Y then return end
 	G.FLOAT_TARGET_Y = G.FLOAT_TARGET_Y + 15
 end)
-RunService:BindToRenderStep("K7DT",Enum.RenderPriority.Input.Value,function(dt)
+RunService:BindToRenderStep("AXYRDUELD",Enum.RenderPriority.Input.Value,function(dt)
 	G._dtSmooth=G._dtSmooth+(math.clamp(dt,1/120,1/20)-G._dtSmooth)*0.1
 end)
 do local _spdT=0; RunService.Heartbeat:Connect(function()
@@ -1038,7 +1038,7 @@ local function stopAutoSteal()
 	isStealing = false; G.isStealing = false; ResetProgressBar()
 end
 local gui=Instance.new("ScreenGui")
-gui.Name="K7MiniHub"; gui.ResetOnSpawn=false; gui.DisplayOrder=10; gui.Parent=LP:WaitForChild("PlayerGui")
+gui.Name="AXYRDUELHub"; gui.ResetOnSpawn=false; gui.DisplayOrder=10; gui.Parent=LP:WaitForChild("PlayerGui")
 local StealBar = Instance.new("Frame", gui)
 StealBar.Name = "StealBar"; StealBar.Size = UDim2.new(0,320,0,54)
 StealBar.Position = UDim2.new(0.5,-160,1,-110)
@@ -1147,7 +1147,7 @@ local function saveConfig()
 	if not writefile then return end
 	local mobBtnSave={}
 	for _,id in ipairs(DEFAULT_MOB_BTNS) do mobBtnSave[id]=mobBtnEnabled[id] end
-	pcall(function() writefile("K7MiniHubConfig.json",HS:JSONEncode({
+	pcall(function() writefile("AXYRDUELHubConfig.json",HS:JSONEncode({
 		normalSpeed=G.NS,carrySpeed=G.CS,grabRadius=G.grabRadius,stealDuration=G.grabDuration,
 		speedToggleKey=KB.SpeedToggle.Name,dropBrainrotKey=KB.DropBrainrot.Name,autoLeftKey=KB.AutoLeft.Name,autoRightKey=KB.AutoRight.Name,
 		autoBatKey=KB.AutoBat.Name,tpLeftKey=KB.TPLeft.Name,tpRightKey=KB.TPRight.Name,
@@ -1167,7 +1167,7 @@ local function saveConfig()
 end
 local buildWPOffsetPanel
 local sidePanel=Instance.new("Frame",gui)
-sidePanel.Size=UDim2.new(0,155,0,0); sidePanel.BackgroundColor3=Color3.fromRGB(16,16,20)
+sidePanel.Size=UDim2.new(0,155,0,0); sidePanel.BackgroundColor3=Color3.fromRGB(18,6,32)
 sidePanel.BorderSizePixel=0; sidePanel.Visible=false; sidePanel.ZIndex=200; sidePanel.ClipsDescendants=true
 addCorner(sidePanel,7); addStroke(sidePanel,C.RED,1,0.4)
 local sidePanelContent=Instance.new("Frame",sidePanel)
@@ -1181,7 +1181,7 @@ local function openSidePanel(sourceBtn,setupFn,panelH)
 	local x=sidePanel.Parent and sourceBtn.AbsolutePosition.X or 0
 	for _,ch in ipairs(sidePanelContent:GetChildren()) do ch:Destroy() end
 	setupFn(sidePanelContent)
-	local main2=gui:FindFirstChild("K7Main")
+	local main2=gui:FindFirstChild("AXYRDUELMain")
 	local px = main2 and (main2.AbsolutePosition.X+main2.AbsoluteSize.X+6) or (x+231)
 	local py = sourceBtn.AbsolutePosition.Y
 	sidePanel.Position=UDim2.new(0,px,0,py); sidePanel.Size=UDim2.new(0,155,0,0)
@@ -1205,28 +1205,28 @@ local function makeSidePanelInput(parent,labelText,defaultVal,yOff,onChanged)
 	addCorner(tb,4); addStroke(tb,C.RED,1,0.6); tb.FocusLost:Connect(function() onChanged(tb) end)
 	return tb
 end
-local MAIN_W  = G.isMobile and 260 or 245
-local MAIN_H  = G.isMobile and 480 or 500
-local BH      = G.isMobile and 34 or 28
-local TS_     = G.isMobile and 13 or 11
-local GAP     = G.isMobile and 40 or 33
+local MAIN_W  = G.isMobile and 300 or 290
+local MAIN_H  = G.isMobile and 560 or 580
+local BH      = G.isMobile and 40 or 34
+local TS_     = G.isMobile and 15 or 13
+local GAP     = G.isMobile and 46 or 40
 local main=Instance.new("Frame",gui)
-main.Name="K7Main"; main.Size=UDim2.new(0,MAIN_W,0,MAIN_H); main.Position=UDim2.new(0,16,0,80)
+main.Name="AXYRDUELMain"; main.Size=UDim2.new(0,MAIN_W,0,MAIN_H); main.Position=UDim2.new(0,16,0,80)
 main.BackgroundColor3=C.BG; main.BorderSizePixel=0; main.ClipsDescendants=true
 addCorner(main,10); addStroke(main,C.RED,1.5,0.3); makeDraggable(main)
 local mobToggleBtn
 do
-	local HEADER_H = 54
+	local HEADER_H = 60
 	local header=Instance.new("Frame",main)
-	header.Size=UDim2.new(1,0,0,HEADER_H); header.BackgroundColor3=Color3.fromRGB(16,16,20)
+	header.Size=UDim2.new(1,0,0,HEADER_H); header.BackgroundColor3=Color3.fromRGB(18,6,32)
 	header.BorderSizePixel=0; addCorner(header,10)
 	local hfix=Instance.new("Frame",main); hfix.Size=UDim2.new(1,0,0,10)
-	hfix.Position=UDim2.new(0,0,0,HEADER_H-10); hfix.BackgroundColor3=Color3.fromRGB(16,16,20); hfix.BorderSizePixel=0
+	hfix.Position=UDim2.new(0,0,0,HEADER_H-10); hfix.BackgroundColor3=Color3.fromRGB(18,6,32); hfix.BorderSizePixel=0
 	local accent=Instance.new("Frame",main); accent.Size=UDim2.new(1,0,0,2)
 	accent.Position=UDim2.new(0,0,0,HEADER_H); accent.BackgroundColor3=C.RED; accent.BorderSizePixel=0
 	local closeBtn=Instance.new("TextButton",header)
 	closeBtn.Size=UDim2.new(0,24,0,24); closeBtn.Position=UDim2.new(1,-28,0,8)
-	closeBtn.BackgroundColor3=Color3.fromRGB(210,30,50); closeBtn.BorderSizePixel=0
+	closeBtn.BackgroundColor3=Color3.fromRGB(150,0,220); closeBtn.BorderSizePixel=0
 	closeBtn.Text="X"; closeBtn.TextColor3=C.WHITE; closeBtn.Font=Enum.Font.GothamBold; closeBtn.TextSize=12
 	addCorner(closeBtn,5)
 	local pingLbl=Instance.new("TextLabel",header)
@@ -1254,10 +1254,10 @@ do
 	userLbl.TextXAlignment=Enum.TextXAlignment.Left; userLbl.TextTruncate=Enum.TextTruncate.AtEnd
 	local badgeFrame=Instance.new("Frame",header)
 	badgeFrame.Size=UDim2.new(0,58,0,15); badgeFrame.Position=UDim2.new(0,44,0,28)
-	badgeFrame.BackgroundColor3=Color3.fromRGB(210,30,50); badgeFrame.BorderSizePixel=0; addCorner(badgeFrame,4)
+	badgeFrame.BackgroundColor3=Color3.fromRGB(130,0,200); badgeFrame.BorderSizePixel=0; addCorner(badgeFrame,4)
 	local badgeLbl=Instance.new("TextLabel",badgeFrame)
 	badgeLbl.Size=UDim2.new(1,0,1,0); badgeLbl.BackgroundTransparency=1
-	badgeLbl.Text="K7 BUYER"; badgeLbl.TextColor3=C.WHITE; badgeLbl.Font=Enum.Font.GothamBlack; badgeLbl.TextSize=8
+	badgeLbl.Text="AXYRDUEL"; badgeLbl.TextColor3=C.WHITE; badgeLbl.Font=Enum.Font.GothamBlack; badgeLbl.TextSize=8
 	if G.isMobile then mobToggleBtn=Instance.new("TextButton",header); mobToggleBtn.Size=UDim2.new(0,0,0,0) end
 	local _fpsCount,_fpsLast=0,tick()
 	RunService.RenderStepped:Connect(function()
@@ -1281,19 +1281,47 @@ do
 		local reopenBtn=Instance.new("TextButton",gui)
 		reopenBtn.Size=UDim2.new(0,60,0,32); reopenBtn.Position=UDim2.new(0,12,1,-52)
 		reopenBtn.BackgroundColor3=Color3.fromRGB(50,50,60); reopenBtn.BackgroundTransparency=0.05; reopenBtn.BorderSizePixel=0
-		reopenBtn.Text="K7"; reopenBtn.TextColor3=Color3.fromRGB(255,255,255)
+		reopenBtn.Text="AXYRDUEL"; reopenBtn.TextColor3=Color3.fromRGB(255,255,255)
 		reopenBtn.Font=Enum.Font.GothamBlack; reopenBtn.TextSize=14
 		addCorner(reopenBtn,10); addStroke(reopenBtn,Color3.fromRGB(180,180,190),1.5,0.2)
 		reopenBtn.Visible=false; reopenBtn.ZIndex=10
 		closeBtn.MouseButton1Click:Connect(function() main.Visible=false; reopenBtn.Visible=true end)
 		reopenBtn.MouseButton1Click:Connect(function() reopenBtn.Visible=false; main.Visible=true end)
 	else
-		closeBtn.MouseButton1Click:Connect(function() main.Visible=false end)
+		-- Desktop: close hides, toggle button allows re-opening
+		local toggleBtn = Instance.new("TextButton", gui)
+		toggleBtn.Size = UDim2.new(0, 110, 0, 28)
+		toggleBtn.Position = UDim2.new(0, 16, 0, 40)
+		toggleBtn.BackgroundColor3 = Color3.fromRGB(60, 0, 110)
+		toggleBtn.BackgroundTransparency = 0.05
+		toggleBtn.BorderSizePixel = 0
+		toggleBtn.Text = "◉  AXYRDUEL"
+		toggleBtn.TextColor3 = Color3.fromRGB(200, 80, 255)
+		toggleBtn.Font = Enum.Font.GothamBlack
+		toggleBtn.TextSize = 11
+		toggleBtn.ZIndex = 20
+		toggleBtn.Visible = false
+		addCorner(toggleBtn, 8)
+		addStroke(toggleBtn, Color3.fromRGB(180, 0, 255), 1.5, 0.1)
+		-- Neon glow effect on toggle button
+		local neonGlow = Instance.new("UIStroke", toggleBtn)
+		neonGlow.Color = Color3.fromRGB(180, 0, 255)
+		neonGlow.Thickness = 2
+		neonGlow.Transparency = 0
+		closeBtn.MouseButton1Click:Connect(function()
+			main.Visible = false
+			toggleBtn.Visible = true
+		end)
+		toggleBtn.MouseButton1Click:Connect(function()
+			main.Visible = not main.Visible
+			toggleBtn.Text = main.Visible and "◉  AXYRDUEL" or "◎  AXYRDUEL"
+			toggleBtn.TextColor3 = main.Visible and Color3.fromRGB(200, 80, 255) or Color3.fromRGB(130, 50, 160)
+		end)
 	end
 end
 local scrollFrame=Instance.new("ScrollingFrame",main)
-scrollFrame.Size=UDim2.new(1,0,1,-58); scrollFrame.Position=UDim2.new(0,0,0,58); scrollFrame.BackgroundTransparency=1
-scrollFrame.BorderSizePixel=0; scrollFrame.ScrollBarThickness=3; scrollFrame.ScrollBarImageColor3=C.RED
+scrollFrame.Size=UDim2.new(1,0,1,-64); scrollFrame.Position=UDim2.new(0,0,0,64); scrollFrame.BackgroundTransparency=1
+scrollFrame.BorderSizePixel=0; scrollFrame.ScrollBarThickness=3; scrollFrame.ScrollBarImageColor3=Color3.fromRGB(180,0,255)
 scrollFrame.CanvasSize=UDim2.new(0,0,0,0); scrollFrame.AutomaticCanvasSize=Enum.AutomaticSize.Y
 local yPos=6
 local function makeBadge(parent,kbName)
@@ -1776,7 +1804,7 @@ buildWPOffsetPanel = function(side)
 end
 do
 	local WP_COLORS = { Color3.fromRGB(80,180,255), Color3.fromRGB(100,255,120), Color3.fromRGB(255,220,50), Color3.fromRGB(255,80,160), }
-	local wpFolder = Instance.new("Folder", workspace); wpFolder.Name = "K7_WaypointMarkers"
+	local wpFolder = Instance.new("Folder", workspace); wpFolder.Name = "AXYRDUEL_WaypointMarkers"
 	local markers = {}
 	local function clearMarkers()
 		for _, p in ipairs(markers) do pcall(function() p:Destroy() end) end; markers = {}
@@ -1908,14 +1936,14 @@ UIS.InputBegan:Connect(function(input,gpe)
 	end
 end)
 local function buildMobileGUI()
-	local _mobPanel=Instance.new("Frame",gui); _mobPanel.Name="K7Mobile"; _mobPanel.Size=UDim2.new(0,140,0,175)
+	local _mobPanel=Instance.new("Frame",gui); _mobPanel.Name="AXYRDUELMobile"; _mobPanel.Size=UDim2.new(0,140,0,175)
 	_mobPanel.Position=UDim2.new(1,-154,1,-194); _mobPanel.BackgroundColor3=Color3.fromRGB(10,10,12); _mobPanel.BackgroundTransparency=0.06
 	_mobPanel.BorderSizePixel=0; _mobPanel.Active=true; _mobPanel.Visible=false
 	addCorner(_mobPanel,10); addStroke(_mobPanel,C.RED,1.5,0.2); makeDraggable(_mobPanel)
 	local actionsReopenBtn=Instance.new("TextButton",gui)
 	actionsReopenBtn.Size=UDim2.new(0,90,0,22); actionsReopenBtn.Position=UDim2.new(1,-100,1,-170)
 	actionsReopenBtn.BackgroundColor3=Color3.fromRGB(45,45,54); actionsReopenBtn.BackgroundTransparency=0.05
-	actionsReopenBtn.BorderSizePixel=0; actionsReopenBtn.Text="K7 ACTIONS"; actionsReopenBtn.TextColor3=Color3.fromRGB(255,255,255)
+	actionsReopenBtn.BorderSizePixel=0; actionsReopenBtn.Text="AXYRDUEL ACTIONS"; actionsReopenBtn.TextColor3=Color3.fromRGB(255,255,255)
 	actionsReopenBtn.Font=Enum.Font.GothamBlack; actionsReopenBtn.TextSize=9
 	addCorner(actionsReopenBtn,8); addStroke(actionsReopenBtn,Color3.fromRGB(160,160,170),1.5,0.2)
 	actionsReopenBtn.Visible=false; actionsReopenBtn.ZIndex=10
@@ -1927,18 +1955,18 @@ local function buildMobileGUI()
 		for id, data in pairs(detachedBtns) do
 			if data.frame and data.frame.Parent then t[id]={x=data.frame.Position.X.Offset,y=data.frame.Position.Y.Offset} end
 		end
-		pcall(function() writefile("K7DetachedBtns.json",HS:JSONEncode(t)) end)
+		pcall(function() writefile("AXYRDUELDetachedBtns.json",HS:JSONEncode(t)) end)
 	end
 	local function loadDetached()
-		if not(isfile and isfile("K7DetachedBtns.json")) then return {} end
-		local ok,t=pcall(function() return HS:JSONDecode(readfile("K7DetachedBtns.json")) end)
+		if not(isfile and isfile("AXYRDUELDetachedBtns.json")) then return {} end
+		local ok,t=pcall(function() return HS:JSONDecode(readfile("AXYRDUELDetachedBtns.json")) end)
 		return (ok and t) or {}
 	end
 	local savedDetached=loadDetached()
 	do
 		local hdr=Instance.new("Frame",_mobPanel); hdr.Size=UDim2.new(1,0,0,24); hdr.BackgroundColor3=Color3.fromRGB(18,18,22); hdr.BorderSizePixel=0; addCorner(hdr,10)
 		local ttl=Instance.new("TextLabel",hdr); ttl.Size=UDim2.new(1,-54,1,0); ttl.Position=UDim2.new(0,6,0,0)
-		ttl.BackgroundTransparency=1; ttl.Text="K7 ACTIONS"; ttl.TextColor3=C.RED2; ttl.Font=Enum.Font.GothamBlack; ttl.TextSize=9; ttl.TextXAlignment=Enum.TextXAlignment.Left
+		ttl.BackgroundTransparency=1; ttl.Text="AXYRDUEL ACTIONS"; ttl.TextColor3=C.RED2; ttl.Font=Enum.Font.GothamBlack; ttl.TextSize=9; ttl.TextXAlignment=Enum.TextXAlignment.Left
 		local rst=Instance.new("TextButton",hdr); rst.Size=UDim2.new(0,32,0,18); rst.Position=UDim2.new(1,-55,0.5,-9)
 		rst.BackgroundColor3=Color3.fromRGB(30,30,36); rst.BorderSizePixel=0; rst.Text="RST"; rst.TextColor3=Color3.fromRGB(220,220,220); rst.Font=Enum.Font.GothamBold; rst.TextSize=9; addCorner(rst,4); addStroke(rst,Color3.fromRGB(140,140,150),1,0.3)
 		rst.MouseButton1Click:Connect(function()
@@ -2208,7 +2236,7 @@ local function buildMobileGUI()
 		end
 	end
 	rebuildMobPanel()
-	local cfgPopup=Instance.new("Frame",gui); cfgPopup.Name="K7BtnCfg"; cfgPopup.Size=UDim2.new(0,168,0,0); cfgPopup.AutomaticSize=Enum.AutomaticSize.Y
+	local cfgPopup=Instance.new("Frame",gui); cfgPopup.Name="AXYRDUELBtnCfg"; cfgPopup.Size=UDim2.new(0,168,0,0); cfgPopup.AutomaticSize=Enum.AutomaticSize.Y
 	cfgPopup.Position=UDim2.new(0.5,-84,0.5,-130); cfgPopup.BackgroundColor3=Color3.fromRGB(12,12,15); cfgPopup.BorderSizePixel=0; cfgPopup.Visible=false; cfgPopup.ZIndex=200
 	addCorner(cfgPopup,10); addStroke(cfgPopup,C.RED,1.5,0.15); makeDraggable(cfgPopup)
 	do
@@ -2241,23 +2269,23 @@ local function buildMobileGUI()
 	setMobileMode=function(on)
 		G.mobileMode=on; _mobPanel.Visible=on
 		if mobToggleBtn then mobToggleBtn.BackgroundColor3=on and C.ON_BG or C.CARD2; mobToggleBtn.TextColor3=on and C.RED2 or C.DIM end
-		TS:Create(main,TweenInfo.new(0.18,Enum.EasingStyle.Quad),{Size=on and UDim2.new(0,180,0,G.isMobile and 360 or 400) or UDim2.new(0,MAIN_W,0,MAIN_H)}):Play()
+		TS:Create(main,TweenInfo.new(0.18,Enum.EasingStyle.Quad),{Size=on and UDim2.new(0,210,0,G.isMobile and 420 or 460) or UDim2.new(0,MAIN_W,0,MAIN_H)}):Play()
 	end
 	if mobToggleBtn then
 		mobToggleBtn.MouseButton1Click:Connect(function() setMobileMode(not G.mobileMode) end)
 		mobToggleBtn.MouseButton2Click:Connect(function() cfgPopup.Visible=not cfgPopup.Visible end)
 	end
 	local pill=Instance.new("TextButton",gui); pill.Size=UDim2.new(0,48,0,20); pill.Position=UDim2.new(1,-54,1,-200)
-	pill.BackgroundColor3=C.RED; pill.BackgroundTransparency=0.1; pill.BorderSizePixel=0; pill.Text="K7 ^"; pill.TextColor3=C.WHITE; pill.Font=Enum.Font.GothamBlack; pill.TextSize=10; addCorner(pill,10)
+	pill.BackgroundColor3=C.RED; pill.BackgroundTransparency=0.1; pill.BorderSizePixel=0; pill.Text="AXYRDUEL ^"; pill.TextColor3=C.WHITE; pill.Font=Enum.Font.GothamBlack; pill.TextSize=10; addCorner(pill,10)
 	pill.Visible=not G.isMobile
-	pill.MouseButton1Click:Connect(function() _mobPanel.Visible=not _mobPanel.Visible; pill.Text=_mobPanel.Visible and "K7 v" or "K7 ^" end)
+	pill.MouseButton1Click:Connect(function() _mobPanel.Visible=not _mobPanel.Visible; pill.Text=_mobPanel.Visible and "AXYRDUEL v" or "AXYRDUEL ^" end)
 	pill.MouseButton2Click:Connect(function() cfgPopup.Visible=not cfgPopup.Visible end)
 end
 if G.isMobile then buildMobileGUI() end
 task.spawn(function() while task.wait(5) do saveConfig() end end)
 local function loadConfig()
-	if not(isfile and isfile("K7MiniHubConfig.json")) then return end
-	local ok,cfg=pcall(function() return HS:JSONDecode(readfile("K7MiniHubConfig.json")) end)
+	if not(isfile and isfile("AXYRDUELHubConfig.json")) then return end
+	local ok,cfg=pcall(function() return HS:JSONDecode(readfile("AXYRDUELHubConfig.json")) end)
 	if not ok or not cfg then return end
 	if cfg.normalSpeed then G.NS=cfg.normalSpeed end
 	if cfg.carrySpeed then G.CS=cfg.carrySpeed end
@@ -2352,7 +2380,7 @@ local function loadConfig()
 	end)
 end
 loadConfig()
-print("K7 Mini Hub")
+print("AXYRDUEL Hub")
 RunService.Stepped:Connect(function()
 	for _,p in ipairs(Players:GetPlayers()) do
 		if p~=LP and p.Character then
