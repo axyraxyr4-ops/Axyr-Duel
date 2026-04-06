@@ -32,8 +32,6 @@ local G = {
 	_dtSmooth=1/60, radValInBar=nil, radMobBtn=nil,
 	brainrotLeftBtn=nil, brainrotRightBtn=nil,
 	medusaModeEnabled=false, medusaModeSetVisual=nil,
-	-- BAT AIMBOT: slot1 tool & lock
-	batSlot1Tool=nil, batUnequipConn=nil,
 }
 local KB = {
 	SpeedToggle=Enum.KeyCode.Q, DropBrainrot=Enum.KeyCode.X, AutoLeft=Enum.KeyCode.Z, AutoRight=Enum.KeyCode.C,
@@ -147,7 +145,7 @@ local function getEffectiveWPs(wps, offsets)
 end
 
 -- ============================================================
--- COLOR PALETTE
+-- COLOR PALETTE (nouvelle charte)
 -- ============================================================
 local C = {
 	BG      = Color3.fromRGB(10,10,18),
@@ -294,6 +292,7 @@ end)
 RunService:BindToRenderStep("AXYRDUELD",Enum.RenderPriority.Input.Value,function(dt)
 	G._dtSmooth=G._dtSmooth+(math.clamp(dt,1/120,1/20)-G._dtSmooth)*0.1
 end)
+-- (speed label mis à jour par le BillboardGui heartbeat)
 
 RunService.Heartbeat:Connect(function()
 	local c=LP.Character; if not c then return end
@@ -683,7 +682,7 @@ local startAutoRight,stopAutoRight = makeAutoPlaySimple(
 	AP_R1, AP_R2, Vector3.new(-482.06,-6.93,35.47))
 
 -- ============================================================
--- ANTI RAGDOLL
+-- ANTI RAGDOLL (version et.txt — avec re-enable ControlModule)
 -- ============================================================
 local _antiRagConn = nil
 local function startAntiRagdoll()
@@ -908,65 +907,20 @@ local function setupMedusa(char)
 	table.insert(G.medusaConns,char.DescendantAdded:Connect(function(part) if part:IsA("BasePart") then table.insert(G.medusaConns,onAnchor(part)) end end))
 end
 
--- ============================================================
--- BAT AIMBOT — SLOT 1 UNIQUEMENT + VERROU
--- ============================================================
--- Récupère le premier outil du Backpack (slot 1 de la hotbar)
-local function getSlot1Tool()
+local lastBatSwing = 0
+local BAT_SWING_COOLDOWN = 0.12
+local function findBat()
+	local c = LP.Character; if not c then return nil end
 	local bp = LP:FindFirstChildOfClass("Backpack")
-	if not bp then return nil end
-	-- On prend le premier Tool dans le Backpack ou dans le Character
-	local c = LP.Character
-	-- D'abord on regarde si un outil est équipé
-	if c then
-		for _, ch in ipairs(c:GetChildren()) do
-			if ch:IsA("Tool") then return ch end
-		end
-	end
-	-- Sinon le premier du backpack
-	for _, ch in ipairs(bp:GetChildren()) do
-		if ch:IsA("Tool") then return ch end
+	for _, ch in ipairs(c:GetChildren()) do if ch:IsA("Tool") and ch.Name:lower():find("bat") then return ch end end
+	if bp then for _, ch in ipairs(bp:GetChildren()) do if ch:IsA("Tool") and ch.Name:lower():find("bat") then return ch end end end
+	local SlapList = {"Bat","Slap","Iron Slap","Gold Slap","Diamond Slap","Emerald Slap","Ruby Slap","Dark Matter Slap","Flame Slap","Nuclear Slap","Galaxy Slap","Glitched Slap"}
+	for _, name in ipairs(SlapList) do
+		local t = c:FindFirstChild(name) or (bp and bp:FindFirstChild(name))
+		if t then return t end
 	end
 	return nil
 end
-
--- Équipe de force l'outil du slot 1 et empêche le déséquipement
-local function lockBatSlot1()
-	local c = LP.Character; if not c then return end
-	local hum = c:FindFirstChildOfClass("Humanoid"); if not hum then return end
-	local tool = getSlot1Tool()
-	if not tool then return end
-	G.batSlot1Tool = tool
-	-- Equiper l'outil
-	if tool.Parent ~= c then
-		hum:EquipTool(tool)
-	end
-	-- Connexion : si l'outil quitte le character, on le réequipe immédiatement
-	if G.batUnequipConn then G.batUnequipConn:Disconnect() end
-	G.batUnequipConn = RunService.Heartbeat:Connect(function()
-		if not G.autoBatEnabled then return end
-		local char = LP.Character; if not char then return end
-		local h = char:FindFirstChildOfClass("Humanoid"); if not h then return end
-		local t = G.batSlot1Tool
-		if not t or not t.Parent then
-			-- L'outil a été détruit ou retiré, on tente de trouver un nouvel outil slot 1
-			t = getSlot1Tool()
-			if t then G.batSlot1Tool = t end
-		end
-		if t and t.Parent ~= char then
-			pcall(function() h:EquipTool(t) end)
-		end
-	end)
-end
-
-local function unlockBatSlot1()
-	if G.batUnequipConn then G.batUnequipConn:Disconnect(); G.batUnequipConn = nil end
-	G.batSlot1Tool = nil
-end
-
-local lastBatSwing = 0
-local BAT_SWING_COOLDOWN = 0.12
-
 local function getClosestPlayer()
 	local c=LP.Character; if not c then return nil end
 	local hrp=c:FindFirstChild("HumanoidRootPart"); if not hrp then return nil end
@@ -979,7 +933,6 @@ end
 local function disableAutoBat()
 	G.autoBatEnabled = false; if G.autoBatSetVisual then G.autoBatSetVisual(false) end
 	G.autoSwingEnabled = false; if G.autoSwingSetVisual then G.autoSwingSetVisual(false) end
-	unlockBatSlot1()
 end
 local function disableAllAutoPlay()
 	if G.autoPlayLeftEnabled then stopAutoPlayLeft(); G.autoPlayLeftEnabled=false; if G.autoPlayLeftSetVisual then G.autoPlayLeftSetVisual(false) end end
@@ -1005,13 +958,8 @@ do local _batT=0; RunService.Heartbeat:Connect(function()
 	end
 	if G.autoSwingEnabled and G.autoBatEnabled then
 		local c=LP.Character; if c then
-			-- Utilise uniquement l'outil du slot 1 verrouillé
-			local bat = G.batSlot1Tool
-			if not bat then bat = getSlot1Tool(); G.batSlot1Tool = bat end
-			if bat then
-				if bat.Parent~=c then
-					local hum=c:FindFirstChildOfClass("Humanoid"); if hum then pcall(function() hum:EquipTool(bat) end) end
-				end
+			local bat=findBat(); if bat then
+				if bat.Parent~=c then local hum=c:FindFirstChildOfClass("Humanoid"); if hum then hum:EquipTool(bat) end end
 				if now-lastBatSwing>=BAT_SWING_COOLDOWN then lastBatSwing=now; pcall(function() bat:Activate() end) end
 			end
 		end
@@ -1160,7 +1108,7 @@ local function saveConfig()
 end
 
 -- ============================================================
--- STEAL BAR
+-- STEAL BAR (hud bas de l'écran)
 -- ============================================================
 local StealBar = Instance.new("Frame", gui)
 StealBar.Name = "StealBar"; StealBar.Size = UDim2.new(0,320,0,54)
@@ -1187,6 +1135,7 @@ do
 	sbPercent.Font = Enum.Font.GothamBlack; sbPercent.TextSize = 12
 	sbPercent.TextColor3 = C.WHITE; sbPercent.TextXAlignment = Enum.TextXAlignment.Right; sbPercent.ZIndex = 11
 	ProgressPercentLabel = sbPercent
+	-- radius controls
 	local radLbl = Instance.new("TextLabel", StealBar)
 	radLbl.Size = UDim2.new(0,36,0,16); radLbl.Position = UDim2.new(1,-168,0,4)
 	radLbl.BackgroundTransparency = 1; radLbl.Text = "Radius"
@@ -1265,6 +1214,7 @@ header.Size = UDim2.new(1, 0, 0, 56)
 header.BackgroundColor3 = C.HEADER
 header.BorderSizePixel = 0
 addCorner(header, 12)
+-- fix bottom corners
 local hfix = Instance.new("Frame", main)
 hfix.Size = UDim2.new(1, 0, 0, 10)
 hfix.Position = UDim2.new(0, 0, 0, 46)
@@ -1277,6 +1227,7 @@ accentLine.Position = UDim2.new(0, 0, 0, 56)
 accentLine.BackgroundColor3 = C.ACCENT
 accentLine.BorderSizePixel = 0
 
+-- Avatar
 local avatarFrame = Instance.new("Frame", header)
 avatarFrame.Size = UDim2.new(0, 34, 0, 34)
 avatarFrame.Position = UDim2.new(0, 8, 0.5, -17)
@@ -1292,6 +1243,7 @@ avatarImg.BorderSizePixel = 0
 addCorner(avatarImg, 15)
 pcall(function() avatarImg.Image = "https://www.roblox.com/headshot-thumbnail/image?userId="..LP.UserId.."&width=48&height=48&format=png" end)
 
+-- Username + badge
 local userLbl = Instance.new("TextLabel", header)
 userLbl.Size = UDim2.new(0, 110, 0, 16)
 userLbl.Position = UDim2.new(0, 48, 0, 8)
@@ -1317,6 +1269,7 @@ badgeLbl.TextColor3 = Color3.fromRGB(255,255,255)
 badgeLbl.Font = Enum.Font.GothamBlack
 badgeLbl.TextSize = 8
 
+-- FPS / Ping labels
 local fpsLbl = Instance.new("TextLabel", header)
 fpsLbl.Size = UDim2.new(0, 60, 0, 13)
 fpsLbl.Position = UDim2.new(1, -130, 0, 6)
@@ -1337,6 +1290,7 @@ pingLbl.Font = Enum.Font.GothamBold
 pingLbl.TextSize = 9
 pingLbl.TextXAlignment = Enum.TextXAlignment.Right
 
+-- Speed display in header
 local spdDisplayLbl = Instance.new("TextLabel", header)
 spdDisplayLbl.Size = UDim2.new(0, 60, 0, 13)
 spdDisplayLbl.Position = UDim2.new(1, -130, 0, 34)
@@ -1349,12 +1303,12 @@ spdDisplayLbl.TextXAlignment = Enum.TextXAlignment.Right
 G.speedLabel = spdDisplayLbl
 
 -- ============================================================
--- SPEED BILLBOARD
+-- SPEED BILLBOARD au-dessus du personnage — texte flottant épuré
 -- ============================================================
 local _speedBB = nil
 local _speedBBLabel = nil
 local _speedBBModeLbl = nil
-G.btnLocked = false
+G.btnLocked = false  -- cadenas : true = boutons flottants verrouillés (pas de drag)
 
 local function createSpeedBillboard(char)
 	if _speedBB then pcall(function() _speedBB:Destroy() end); _speedBB=nil end
@@ -1370,6 +1324,7 @@ local function createSpeedBillboard(char)
 	bb.Adornee = hrp
 	bb.Parent = hrp
 
+	-- Vitesse principale — texte seul, sans fond
 	local sLbl = Instance.new("TextLabel", bb)
 	sLbl.Size = UDim2.new(1, 0, 0, 28)
 	sLbl.Position = UDim2.new(0, 0, 0, 0)
@@ -1382,6 +1337,7 @@ local function createSpeedBillboard(char)
 	sLbl.TextStrokeTransparency = 0.4
 	sLbl.TextStrokeColor3 = Color3.fromRGB(0, 0, 0)
 
+	-- Mode NORMAL/CARRY — petit texte en dessous
 	local mLbl = Instance.new("TextLabel", bb)
 	mLbl.Size = UDim2.new(1, 0, 0, 14)
 	mLbl.Position = UDim2.new(0, 0, 0, 26)
@@ -1398,11 +1354,13 @@ local function createSpeedBillboard(char)
 	_speedBBLabel = sLbl
 	_speedBBModeLbl = mLbl
 end
+-- Créer au démarrage si le personnage existe déjà
 if LP.Character then createSpeedBillboard(LP.Character) end
 LP.CharacterAdded:Connect(function(char)
 	task.wait(0.3)
 	createSpeedBillboard(char)
 end)
+-- Heartbeat : mise à jour vitesse + mode + couleur
 do local _bbt=0; RunService.Heartbeat:Connect(function()
 	local now=tick(); if now-_bbt<0.1 then return end; _bbt=now
 	if not _speedBBLabel or not _speedBBModeLbl then return end
@@ -1424,13 +1382,13 @@ do local _bbt=0; RunService.Heartbeat:Connect(function()
 end) end
 
 -- ============================================================
--- CADENAS
+-- CADENAS — au-dessus de l'auto steal bar, bloque/débloque le drag des boutons flottants
 -- ============================================================
 do
 	local lockFrame = Instance.new("TextButton", gui)
 	lockFrame.Name = "LockBtn"
 	lockFrame.Size = UDim2.new(0, 54, 0, 44)
-	lockFrame.Position = UDim2.new(0.5, -27, 1, -162)
+	lockFrame.Position = UDim2.new(0.5, -27, 1, -162)  -- juste au-dessus du StealBar (1,-110 - 54 - 8 = -172, +légère marge)
 	lockFrame.BackgroundColor3 = Color3.fromRGB(16, 12, 28)
 	lockFrame.BackgroundTransparency = 0.1
 	lockFrame.BorderSizePixel = 0
@@ -1461,32 +1419,22 @@ do
 	end)
 end
 
--- ============================================================
--- CLOSE BUTTON — vraie croix Unicode ✕ grande et visible
--- ============================================================
+-- Close button
 local closeBtn = Instance.new("TextButton", header)
-closeBtn.Size = UDim2.new(0, 26, 0, 26)
-closeBtn.Position = UDim2.new(1, -30, 0.5, -13)
-closeBtn.BackgroundColor3 = Color3.fromRGB(180, 30, 50)
+closeBtn.Size = UDim2.new(0, 22, 0, 22)
+closeBtn.Position = UDim2.new(1, -26, 0.5, -11)
+closeBtn.BackgroundColor3 = C.ACCENT
 closeBtn.BorderSizePixel = 0
 closeBtn.Text = "✕"
 closeBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-closeBtn.Font = Enum.Font.GothamBlack
-closeBtn.TextSize = 16
-addCorner(closeBtn, 6)
-addStroke(closeBtn, Color3.fromRGB(220, 50, 70), 1.5, 0.2)
--- Effet hover
-closeBtn.MouseEnter:Connect(function()
-	TS:Create(closeBtn, TweenInfo.new(0.1), {BackgroundColor3=Color3.fromRGB(220,40,60)}):Play()
-end)
-closeBtn.MouseLeave:Connect(function()
-	TS:Create(closeBtn, TweenInfo.new(0.1), {BackgroundColor3=Color3.fromRGB(180,30,50)}):Play()
-end)
+closeBtn.Font = Enum.Font.GothamBold
+closeBtn.TextSize = 11
+addCorner(closeBtn, 5)
 
--- Save button
+-- Save button (à gauche du close)
 local saveBtn = Instance.new("TextButton", header)
 saveBtn.Size = UDim2.new(0, 36, 0, 22)
-saveBtn.Position = UDim2.new(1, -70, 0.5, -11)
+saveBtn.Position = UDim2.new(1, -66, 0.5, -11)
 saveBtn.BackgroundColor3 = Color3.fromRGB(20, 60, 30)
 saveBtn.BorderSizePixel = 0
 saveBtn.Text = "💾"
@@ -1501,6 +1449,7 @@ do
 		if _saveCooldown then return end
 		_saveCooldown = true
 		saveConfig()
+		-- Feedback visuel : flash vert
 		saveBtn.BackgroundColor3 = Color3.fromRGB(30, 110, 50)
 		saveBtn.Text = "✓"
 		task.delay(0.8, function()
@@ -1529,6 +1478,8 @@ do local _pt=0; RunService.Heartbeat:Connect(function()
 		pingLbl.TextColor3=ping<80 and C.GREEN or ping<150 and Color3.fromRGB(255,200,50) or Color3.fromRGB(200,200,210)
 	end)
 end) end
+
+-- (speed heartbeat géré par le BillboardGui ci-dessus)
 
 -- ---- TABS ----
 local TAB_NAMES = {"Movement","Teleport","Auto","Defense","Visual"}
@@ -1587,6 +1538,7 @@ tabDivider.BorderSizePixel = 0
 local CONTENT_Y = 58 + TAB_H + 1
 local CONTENT_H = MAIN_H - CONTENT_Y
 
+-- Create scrolling pages per tab
 for i = 1, #TAB_NAMES do
 	local sf = Instance.new("ScrollingFrame", main)
 	sf.Size = UDim2.new(1, 0, 0, CONTENT_H)
@@ -1625,6 +1577,7 @@ local function makeSection(pageIdx, text)
 	return lbl
 end
 
+-- Toggle pill
 local function makeTogglePill(parent, on)
 	local pill = Instance.new("Frame", parent)
 	pill.Size = UDim2.new(0, 30, 0, 16)
@@ -1647,6 +1600,7 @@ local function setPillState(pill, circle, on)
 	}):Play()
 end
 
+-- Keybind badge
 local function makeKbBadge(parent, kbName)
 	if G.isMobile then return nil end
 	local badge = Instance.new("TextLabel", parent)
@@ -1671,6 +1625,7 @@ local function makeKbBadge(parent, kbName)
 	return badge
 end
 
+-- Row button (toggle)
 local function makeToggleRow(pageIdx, text, kbName, callback)
 	local row = Instance.new("Frame", tabPages[pageIdx])
 	row.Size = UDim2.new(1, 0, 0, 34)
@@ -1713,6 +1668,7 @@ local function makeToggleRow(pageIdx, text, kbName, callback)
 	return setVisual, row
 end
 
+-- Action button (no toggle)
 local function makeActionRow(pageIdx, text, kbName, callback)
 	local row = Instance.new("TextButton", tabPages[pageIdx])
 	row.Size = UDim2.new(1, 0, 0, 34)
@@ -1748,6 +1704,7 @@ local function makeActionRow(pageIdx, text, kbName, callback)
 	return row, lbl
 end
 
+-- Orange toggle (Medusa Mode style)
 local function makeOrangeToggleRow(pageIdx, text, callback)
 	local row = Instance.new("Frame", tabPages[pageIdx])
 	row.Size = UDim2.new(1, 0, 0, 34)
@@ -1792,6 +1749,7 @@ local function makeOrangeToggleRow(pageIdx, text, callback)
 	return setVisual, row
 end
 
+-- Number input field
 local function makeNumberInput(parent, labelText, value, yOff, onChanged)
 	local lbl = Instance.new("TextLabel", parent)
 	lbl.Size = UDim2.new(0.5, -6, 0, 14); lbl.Position = UDim2.new(0, 8, 0, yOff)
@@ -1893,6 +1851,7 @@ end
 -- ============================================================
 do
 	local pg = tabPages[1]
+	-- Speed panel
 	local speedPanel = Instance.new("Frame", pg)
 	speedPanel.Size = UDim2.new(1, 0, 0, 72)
 	speedPanel.BackgroundColor3 = C.CARD2
@@ -1922,6 +1881,7 @@ do
 	makeSpeedField("Normal", function() return G.NS end, function(v) G.NS=v end, 0)
 	makeSpeedField("Carry",  function() return G.CS end, function(v) G.CS=v end, 0.5)
 
+	-- Speed toggle
 	local sv, sRow = makeToggleRow(1, "Speed Boost", "SpeedToggle", function(on)
 		G.speedMode = on
 	end)
@@ -1929,12 +1889,14 @@ do
 		G.speedMode = state; sv(state)
 	end
 
+	-- Float toggle
 	local fv, fRow = makeToggleRow(1, "Float", "FloatToggle", function(on)
 		G.floatEnabled = on
 		if on then startFloat() else stopFloat() end
 	end)
 	G.floatSetVisual = fv
 
+	-- Float height row
 	local fhRow = Instance.new("Frame", pg)
 	fhRow.Size = UDim2.new(1, 0, 0, 48)
 	fhRow.BackgroundColor3 = C.CARD2
@@ -1961,6 +1923,7 @@ do
 			saveConfig()
 		end
 	end)
+	-- Float up/down
 	local function makeFloatBtn(parent, txt, xPos, fn)
 		local b = Instance.new("TextButton", parent)
 		b.Size = UDim2.new(0, 36, 0, 22); b.Position = UDim2.new(0, xPos, 0, 20)
@@ -1976,6 +1939,7 @@ do
 	makeFloatBtn(fhRow, "▲ Up", 80, function() floatAdjustY(0.12) end)
 	makeFloatBtn(fhRow, "▼ Dn", 120, function() floatAdjustY(-0.12) end)
 
+	-- Infinite Jump
 	local ijv, _ = makeToggleRow(1, "Infinite Jump", nil, function(on)
 		G.infJumpEnabled = on
 		if on then startInfiniteJump() else stopInfiniteJump() end
@@ -1987,6 +1951,7 @@ end
 -- TAB 2 : TELEPORT
 -- ============================================================
 do
+	-- Auto TP button (custom, shows side)
 	local pg = tabPages[2]
 	local tpRow = Instance.new("Frame", pg)
 	tpRow.Size = UDim2.new(1, 0, 0, 34)
@@ -1997,6 +1962,7 @@ do
 		local badge = makeKbBadge(tpRow, "AutoTP")
 		if badge then badge.Position = UDim2.new(0,6,0.5,-8); xOff=34 end
 	end
+	-- side badge
 	local sideBadge = Instance.new("Frame", tpRow)
 	sideBadge.Size = UDim2.new(0, 38, 0, 18); sideBadge.Position = UDim2.new(0, xOff, 0.5, -9)
 	sideBadge.BackgroundColor3 = C.ACCENT; sideBadge.BorderSizePixel=0; addCorner(sideBadge, 4)
@@ -2033,11 +1999,15 @@ do
 	G.brainrotLeftBtn = function(on) if G_myPlotSide=="left" then tpActive=on; G_tpAutoEnabled=on; updateTPBtn() end end
 	G.brainrotRightBtn = function(on) if G_myPlotSide=="right" then tpActive=on; G_tpAutoEnabled=on; updateTPBtn() end end
 
+	-- Auto Play after TP
 	local aptp_v, _ = makeToggleRow(2, "Auto Play after TP", nil, function(on)
 		G_autoPlayAfterTP = on
 	end)
 
+	-- Drop Brainrot
 	makeActionRow(2, "Drop Brainrot", "DropBrainrot", function() runDrop() end)
+
+	-- TP Down
 	makeActionRow(2, "TP Down", "TPDown", function() runTPDown() end)
 end
 
@@ -2046,6 +2016,7 @@ end
 -- ============================================================
 do
 	makeSection(3, "STEAL")
+	-- Auto Steal row with radius
 	local stealRow = Instance.new("Frame", tabPages[3])
 	stealRow.Size = UDim2.new(1,0,0,56); stealRow.BackgroundColor3=C.CARD; stealRow.BorderSizePixel=0
 	addCorner(stealRow,7); addStroke(stealRow,C.BORDER,1,0.3)
@@ -2056,6 +2027,7 @@ do
 	local stActive = false
 	local stPill,stCircle = makeTogglePill(stealRow,false)
 	stPill.Position=UDim2.new(1,-38,0,8)
+	-- Radius row
 	local radLbl2 = Instance.new("TextLabel",stealRow)
 	radLbl2.Size=UDim2.new(0,40,0,14); radLbl2.Position=UDim2.new(0,8,0,32)
 	radLbl2.BackgroundTransparency=1; radLbl2.Text="Radius:"
@@ -2120,6 +2092,7 @@ do
 		else stopAutoPlayLeft() end
 	end)
 	G.autoPlayLeftSetVisual=apl_v
+	-- WP gear button
 	local aplGear=Instance.new("TextButton",aplRow); aplGear.Size=UDim2.new(0,22,0,22); aplGear.Position=UDim2.new(1,-68,0.5,-11)
 	aplGear.BackgroundColor3=C.CARD2; aplGear.BorderSizePixel=0; aplGear.Text="⚙"; aplGear.TextColor3=Color3.fromRGB(80,180,255)
 	aplGear.Font=Enum.Font.Gotham; aplGear.TextSize=13; aplGear.ZIndex=5; addCorner(aplGear,4)
@@ -2146,20 +2119,9 @@ do
 	G.autoPlayCountdownSetVisual=function(s) G.autoPlayCountdownEnabled=s; apc_v(s) end
 
 	makeSection(3, "BAT AIMBOT")
-	-- BAT AIMBOT — utilise le slot 1 et le verrouille
-	local bat_v,_ = makeToggleRow(3,"Bat Aimbot (Slot 1)","AutoBat",function(on)
+	local bat_v,_ = makeToggleRow(3,"Bat Aimbot","AutoBat",function(on)
 		G.autoBatEnabled=on
-		if on then
-			if G.autoPlayLeftEnabled or G.autoPlayRightEnabled then disableAllAutoPlay() end
-			-- Trouver et verrouiller le slot 1
-			task.spawn(function()
-				task.wait(0.05)
-				lockBatSlot1()
-			end)
-		else
-			-- Déverrouiller quand on désactive
-			unlockBatSlot1()
-		end
+		if on then if G.autoPlayLeftEnabled or G.autoPlayRightEnabled then disableAllAutoPlay() end end
 	end)
 	G.autoBatSetVisual=bat_v
 	local sw_v,_ = makeToggleRow(3,"Auto Swing",nil,function(on) G.autoSwingEnabled=on end)
@@ -2232,26 +2194,27 @@ toggleBtn.MouseButton1Click:Connect(function()
 end)
 
 -- ============================================================
--- BOUTONS FLOTTANTS INDEPENDANTS
--- Keybinds synchronisés avec les badges du menu principal
--- Positions sauvegardées dans G.floatBtnPositions
+-- BOUTONS FLOTTANTS INDEPENDANTS — chacun déplaçable seul
 -- ============================================================
 do
-	local BTN_W = 230
-	local BTN_H = 62
-	local KB_W  = 54
+	local BTN_W = 230  -- largeur zone label+toggle
+	local BTN_H = 62   -- hauteur
+	local KB_W  = 54   -- largeur zone keybind
 
+	-- Table pour sauvegarder les positions des boutons flottants
 	if not G.floatBtnPositions then G.floatBtnPositions = {} end
 
-	-- Crée un bouton flottant indépendant avec keybind synchronisé
-	local function makeFloatingBtn(defaultX, defaultY, label, keyName, colorAccent, onAction, isToggle)
+	-- Crée un bouton flottant indépendant, draggable par lui-même
+	-- isToggle=false → chaque clic/touche déclenche l'action directement (pas d'état on/off persistant)
+	local function makeFloatingBtn(startX, startY, label, keyName, colorAccent, onAction, isToggle)
 		local isOn = false
 
-		-- Position : sauvegardée ou défaut
+		-- Charger position sauvegardée si disponible
 		local savedPos = G.floatBtnPositions[label]
-		local posX = savedPos and savedPos.x or defaultX
-		local posY = savedPos and savedPos.y or defaultY
+		local posX = savedPos and savedPos.x or startX
+		local posY = savedPos and savedPos.y or startY
 
+		-- Frame racine = le bouton entier, draggable
 		local btn = Instance.new("Frame", gui)
 		btn.Name = "FloatBtn_"..label
 		btn.Size = UDim2.new(0, BTN_W + KB_W, 0, BTN_H)
@@ -2267,6 +2230,7 @@ do
 		stroke.Thickness = 1.5
 		stroke.Transparency = 0.3
 
+		-- Label
 		local lblEl = Instance.new("TextLabel", btn)
 		lblEl.Size = UDim2.new(1, -(KB_W + 12), 0, 26)
 		lblEl.Position = UDim2.new(0, 12, 0, 9)
@@ -2278,6 +2242,7 @@ do
 		lblEl.TextXAlignment = Enum.TextXAlignment.Left
 		lblEl.ZIndex = 31
 
+		-- Pill toggle (visible seulement si isToggle)
 		local pill = Instance.new("Frame", btn)
 		pill.Size = UDim2.new(0, 40, 0, 20)
 		pill.Position = UDim2.new(0, 12, 1, -28)
@@ -2305,6 +2270,7 @@ do
 		statusLbl.TextSize = 12
 		statusLbl.ZIndex = 31
 
+		-- Séparateur vertical
 		local sep = Instance.new("Frame", btn)
 		sep.Size = UDim2.new(0, 1, 0.6, 0)
 		sep.Position = UDim2.new(1, -KB_W, 0.2, 0)
@@ -2312,11 +2278,7 @@ do
 		sep.BorderSizePixel = 0
 		sep.ZIndex = 31
 
-		-- ============================================================
-		-- KEYBIND — synchronisé avec G.allBadges du menu principal
-		-- On enregistre ce label dans allBadges pour qu'il soit mis à jour
-		-- quand l'utilisateur change un keybind depuis le menu
-		-- ============================================================
+		-- Keybind (label synchronisé avec KB table)
 		local kbEl = Instance.new("TextLabel", btn)
 		kbEl.Size = UDim2.new(0, KB_W, 1, 0)
 		kbEl.Position = UDim2.new(1, -KB_W, 0, 0)
@@ -2328,25 +2290,7 @@ do
 		kbEl.TextXAlignment = Enum.TextXAlignment.Center
 		kbEl.ZIndex = 31
 
-		-- Enregistrer dans allBadges pour sync automatique lors des changements de keybind
-		-- On crée un objet proxy qui se comporte comme un TextLabel pour la mise à jour
-		if keyName then
-			-- On remplace le badge précédent ou on crée un nouveau groupe si déjà existant
-			-- Utilisation d'un wrapper : on stocke les deux (menu badge + bouton flottant)
-			local prevBadge = G.allBadges[keyName]
-			-- Créer un objet "multi-badge" qui met à jour les deux
-			G.allBadges[keyName] = {
-				Text = kbEl.Text,  -- proxy pour lecture
-				BackgroundColor3 = kbEl.BackgroundTransparency,
-				_menuBadge = prevBadge,
-				_floatLabel = kbEl,
-				-- Setter via __newindex géré manuellement dans le keybind handler
-			}
-			-- Stocker séparément pour accès direct
-			G._floatKbLabels = G._floatKbLabels or {}
-			G._floatKbLabels[keyName] = kbEl
-		end
-
+		-- setVisual déclaré AVANT les connexions pour éviter le bug de scope
 		local function setVisual(s)
 			if isToggle == false then return end
 			isOn = s
@@ -2363,6 +2307,7 @@ do
 			lblEl.TextColor3 = s and colorAccent or C.WHITE
 		end
 
+		-- Drag : click court = action, click long = drag
 		local dragActive = false
 		local dragOffX, dragOffY = 0, 0
 		local moved = false
@@ -2378,7 +2323,7 @@ do
 
 		UIS.InputChanged:Connect(function(inp)
 			if not dragActive then return end
-			if G.btnLocked then dragActive = false; return end
+			if G.btnLocked then dragActive = false; return end  -- cadenas actif = pas de drag
 			if inp.UserInputType == Enum.UserInputType.MouseMovement or inp.UserInputType == Enum.UserInputType.Touch then
 				local dx = math.abs(inp.Position.X - (btn.AbsolutePosition.X + dragOffX))
 				local dy = math.abs(inp.Position.Y - (btn.AbsolutePosition.Y + dragOffY))
@@ -2394,18 +2339,20 @@ do
 				if dragActive then
 					dragActive = false
 					if moved then
-						-- Sauvegarder position après drag
+						-- Sauvegarder la nouvelle position
 						G.floatBtnPositions[label] = {
 							x = math.floor(btn.AbsolutePosition.X),
 							y = math.floor(btn.AbsolutePosition.Y)
 						}
 						saveConfig()
 					else
+						-- Clic = déclencher l'action
 						if isToggle ~= false then
 							isOn = not isOn
 							setVisual(isOn)
 							if onAction then onAction(isOn) end
 						else
+							-- Flash visuel
 							btn.BackgroundColor3 = C.ON_BG
 							stroke.Color = colorAccent; stroke.Transparency = 0.05
 							task.delay(0.18, function()
@@ -2419,14 +2366,24 @@ do
 			end
 		end)
 
+		if keyName then G.allBadges[keyName] = kbEl end
 		return setVisual
 	end
 
-	local LX = 310
-	local RX = 310 + BTN_W + KB_W + 10
-	local Y0 = 320
-	local YS = BTN_H + 8
+	-- ============================================================
+	-- Positions : boutons dans la zone encadrée sur la photo
+	-- (zone centrale de l'écran, côté duel, autour de x=310..610)
+	-- LX = colonne gauche dans la zone encadrée
+	-- RX = colonne droite dans la zone encadrée
+	-- Y0 = hauteur de départ (milieu écran)
+	-- ============================================================
+	local LX = 310                         -- colonne gauche zone encadrée
+	local RX = 310 + BTN_W + KB_W + 10    -- colonne droite zone encadrée
+	local Y0 = 320   -- y de départ (zone milieu-écran comme sur la photo)
+	local YS = BTN_H + 8  -- espacement vertical
 
+	-- ---- GAUCHE ----
+	-- Photo : Track Player (haut), Float (milieu)
 	local trackSideV = makeFloatingBtn(LX, Y0,           "TRACK PLAYER", "AutoTP",       C.ACCENT2, function(on)
 		G_tpAutoEnabled = on
 		task.spawn(function() refreshMyPlotSide() end)
@@ -2437,7 +2394,7 @@ do
 		if on then startFloat() else stopFloat() end
 		if G.floatSetVisual then G.floatSetVisual(on) end
 	end, true)
-
+	-- ---- DROITE ----
 	local tpDownSideV = makeFloatingBtn(RX, Y0,           "TP DOWN",      "TPDown",       C.ACCENT2, function()
 		runTPDown()
 	end, false)
@@ -2472,7 +2429,7 @@ do
 	end, true)
 	G.autoPlayRightSideV = aprSideV
 
-	-- SYNC visuals menu principal ↔ boutons flottants
+	-- ======== SYNC avec visuals du menu principal ========
 	local _oFloat = G.floatSetVisual
 	G.floatSetVisual = function(s) if _oFloat then _oFloat(s) end; floatSideV(s) end
 
@@ -2535,16 +2492,14 @@ end
 -- ============================================================
 -- CHARACTER EVENTS
 -- ============================================================
+local function setupSpeedIndicator(char)
+	-- Speed shown in header now, no billboard needed
+end
 LP.CharacterAdded:Connect(function(char)
-	G.lastHealth=100; task.wait(0.5)
+	G.lastHealth=100; task.wait(0.5); setupSpeedIndicator(char)
 	if G.medusaCounterEnabled then setupMedusa(char) end
 	if G.unwalkEnabled then startUnwalk() end
 	if G.infJumpEnabled then task.wait(0.2); setupIJForce() end
-	-- Si bat aimbot actif, re-verrouiller slot 1 après respawn
-	if G.autoBatEnabled then
-		task.wait(0.5)
-		lockBatSlot1()
-	end
 	task.spawn(function()
 		task.wait(0.3)
 		pcall(function()
@@ -2556,7 +2511,6 @@ end)
 
 -- ============================================================
 -- KEYBIND INPUT HANDLER
--- Met à jour TOUS les badges (menu + boutons flottants)
 -- ============================================================
 UIS.InputBegan:Connect(function(input, gpe)
 	if gpe then return end
@@ -2564,37 +2518,11 @@ UIS.InputBegan:Connect(function(input, gpe)
 		local kc=input.KeyCode; if kc==Enum.KeyCode.Unknown then return end
 		local orig=G.waitingForKey; G.waitingForKey=nil
 		if kc==Enum.KeyCode.Escape then
-			-- Restaurer l'affichage du badge menu
-			local badge = G.allBadges[orig]
-			if badge then
-				if type(badge) == "table" then
-					if badge._menuBadge then badge._menuBadge.Text=getKeyName(KB[orig]); badge._menuBadge.BackgroundColor3=Color3.fromRGB(18,14,32) end
-					if badge._floatLabel then badge._floatLabel.Text=getKeyName(KB[orig]) end
-				else
-					badge.Text=getKeyName(KB[orig]); badge.BackgroundColor3=Color3.fromRGB(18,14,32)
-				end
-			end
-			-- Aussi mettre à jour le label flottant si existant
-			if G._floatKbLabels and G._floatKbLabels[orig] then
-				G._floatKbLabels[orig].Text = getKeyName(KB[orig])
-			end
+			if G.allBadges[orig] then G.allBadges[orig].Text=getKeyName(KB[orig]); G.allBadges[orig].BackgroundColor3=Color3.fromRGB(18,14,32) end
 			return
 		end
 		KB[orig]=kc
-		-- Mettre à jour badge menu principal
-		local badge = G.allBadges[orig]
-		if badge then
-			if type(badge) == "table" then
-				if badge._menuBadge then badge._menuBadge.Text=getKeyName(kc); badge._menuBadge.BackgroundColor3=Color3.fromRGB(18,14,32) end
-				if badge._floatLabel then badge._floatLabel.Text=getKeyName(kc) end
-			else
-				badge.Text=getKeyName(kc); badge.BackgroundColor3=Color3.fromRGB(18,14,32)
-			end
-		end
-		-- Mettre à jour label flottant indépendant
-		if G._floatKbLabels and G._floatKbLabels[orig] then
-			G._floatKbLabels[orig].Text = getKeyName(kc)
-		end
+		if G.allBadges[orig] then G.allBadges[orig].Text=getKeyName(kc); G.allBadges[orig].BackgroundColor3=Color3.fromRGB(18,14,32) end
 		saveConfig(); return
 	end
 	if input.UserInputType ~= Enum.UserInputType.Keyboard then return end
@@ -2614,9 +2542,6 @@ UIS.InputBegan:Connect(function(input, gpe)
 		G.autoBatEnabled=not G.autoBatEnabled
 		if G.autoBatEnabled then
 			if G.autoPlayLeftEnabled or G.autoPlayRightEnabled then disableAllAutoPlay() end
-			task.spawn(function() task.wait(0.05); lockBatSlot1() end)
-		else
-			unlockBatSlot1()
 		end
 		if G.autoBatSetVisual then G.autoBatSetVisual(G.autoBatEnabled) end
 	elseif kc==KB.TPDown then runTPDown()
@@ -2654,7 +2579,7 @@ UIS.InputBegan:Connect(function(input, gpe)
 end)
 
 -- ============================================================
--- NO COLLIDE OTHER PLAYERS
+-- NO COLLIDE OTHER PLAYERS (Stepped)
 -- ============================================================
 RunService.Stepped:Connect(function()
 	for _,p in ipairs(Players:GetPlayers()) do
@@ -2738,46 +2663,14 @@ local function loadConfig()
 	if cfg.apOffsets then for i=1,4 do if cfg.apOffsets[i] then AP_Offsets[i]=cfg.apOffsets[i] end end end
 	if cfg.aprOffsets then for i=1,4 do if cfg.aprOffsets[i] then APR_Offsets[i]=cfg.aprOffsets[i] end end end
 	if cfg.medusaMode~=nil then G.medusaModeEnabled=cfg.medusaMode end
-	if cfg.floatBtnPositions then
-		G.floatBtnPositions=cfg.floatBtnPositions
-		-- Repositionner les boutons flottants existants avec les positions sauvegardées
-		for _, child in ipairs(gui:GetChildren()) do
-			if child.Name:sub(1, 9) == "FloatBtn_" then
-				local btnLabel = child.Name:sub(10)
-				local savedPos = G.floatBtnPositions[btnLabel]
-				if savedPos then
-					child.Position = UDim2.new(0, savedPos.x, 0, savedPos.y)
-				end
-			end
-		end
-	end
+	if cfg.floatBtnPositions then G.floatBtnPositions=cfg.floatBtnPositions end
 	if G.medusaCounterEnabled then setupMedusa(LP.Character) end
 	if G.infJumpEnabled then startInfiniteJump() end
 	if G.removeAccessoriesEnabled then enableRemoveAccessories() end
 	if G.unwalkEnabled then startUnwalk() end
-	-- Si bat aimbot était actif au chargement, verrouiller slot 1
-	if G.autoBatEnabled then
-		task.spawn(function() task.wait(0.5); lockBatSlot1() end)
-	end
 	task.defer(function()
 		if G.radValInBar then G.radValInBar.Text=tostring(G.grabRadius) end
-		-- Mettre à jour TOUS les badges keybind (menu + flottants)
-		for kbName, badge in pairs(G.allBadges) do
-			if KB[kbName] then
-				if type(badge) == "table" then
-					if badge._menuBadge then badge._menuBadge.Text=getKeyName(KB[kbName]) end
-					if badge._floatLabel then badge._floatLabel.Text=getKeyName(KB[kbName]) end
-				else
-					badge.Text=getKeyName(KB[kbName])
-				end
-			end
-		end
-		-- Labels flottants directs
-		if G._floatKbLabels then
-			for kbName, lbl in pairs(G._floatKbLabels) do
-				if KB[kbName] then lbl.Text = getKeyName(KB[kbName]) end
-			end
-		end
+		for kbName,badge in pairs(G.allBadges) do if KB[kbName] then badge.Text=getKeyName(KB[kbName]) end end
 		if G.speedBtn then G.speedBtn(G.speedMode) end
 		if G.floatSetVisual then G.floatSetVisual(G.floatEnabled) end
 		if G.autoStealSetVisual then G.autoStealSetVisual(G.autoGrabEnabled) end
@@ -2804,4 +2697,4 @@ local function loadConfig()
 	end)
 end
 loadConfig()
-print("AXYRDUEL Hub v2 — Updated GUI loaded")
+print("AXYRDUEL Hub — New GUI loaded")
