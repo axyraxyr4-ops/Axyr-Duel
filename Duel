@@ -23,7 +23,7 @@ local G = {
 	autoPlayLeftSetVisual=nil, autoPlayRightSetVisual=nil, autoStealSetVisual=nil,
 	antiRagdollSetVisual=nil, medusaSetVisual=nil,
 	noCamSetVisual=nil, shinySetVisual=nil, optimizerSetVisual=nil, removeAccSetVisual=nil,
-	grabRadius=20, grabDuration=0.19, isStealing=false, stealStartTime=0, lastStealTick=0,
+	grabRadius=8, grabDuration=0.19, isStealing=false, stealStartTime=0, lastStealTick=0,
 	shinyEnabled=false, shinyGraphicsSky=nil, shinyBloom=nil, shinyCC=nil, shinyGraphicsConn=nil,
 	shinyPlanets={}, originalSkybox=nil, optimizerEnabled=false, ultraModeEnabled=false,
 	galaxyVectorForce=nil, galaxyAttachment=nil, IJ_spaceHeld=false, IJ_lastHop=0, IJ_HOP_COOLDOWN=0.08,
@@ -910,11 +910,20 @@ end
 local lastBatSwing = 0
 local BAT_SWING_COOLDOWN = 0.12
 local function findBat()
+	-- Noms exacts du bat dans Steal a Brainrot (anciennement "Tung Bat", renommé "Bat")
+	local BAT_NAMES = {"Bat", "Tung Bat", "Iron Bat", "Gold Bat", "Diamond Bat", "Emerald Bat", "Ruby Bat", "Dark Matter Bat", "Flame Bat", "Nuclear Bat", "Galaxy Bat", "Glitched Bat"}
 	local c = LP.Character; if not c then return nil end
 	local bp = LP:FindFirstChildOfClass("Backpack")
+	-- Priorité 1 : noms exacts du bat
+	for _, name in ipairs(BAT_NAMES) do
+		local t = c:FindFirstChild(name) or (bp and bp:FindFirstChild(name))
+		if t and t:IsA("Tool") then return t end
+	end
+	-- Priorité 2 : tout outil contenant "bat" dans le nom
 	for _, ch in ipairs(c:GetChildren()) do if ch:IsA("Tool") and ch.Name:lower():find("bat") then return ch end end
 	if bp then for _, ch in ipairs(bp:GetChildren()) do if ch:IsA("Tool") and ch.Name:lower():find("bat") then return ch end end end
-	local SlapList = {"Bat","Slap","Iron Slap","Gold Slap","Diamond Slap","Emerald Slap","Ruby Slap","Dark Matter Slap","Flame Slap","Nuclear Slap","Galaxy Slap","Glitched Slap"}
+	-- Priorité 3 : slaps (fallback)
+	local SlapList = {"Slap","Iron Slap","Gold Slap","Diamond Slap","Emerald Slap","Ruby Slap","Dark Matter Slap","Flame Slap","Nuclear Slap","Galaxy Slap","Glitched Slap"}
 	for _, name in ipairs(SlapList) do
 		local t = c:FindFirstChild(name) or (bp and bp:FindFirstChild(name))
 		if t then return t end
@@ -943,6 +952,20 @@ do local _batT=0; RunService.Heartbeat:Connect(function()
 	if G.autoBatEnabled and now-_batT >= 1/30 then
 		_batT=now
 		local c=LP.Character; if c then
+			-- Équiper la bat seulement si aucun outil n'est tenu (pour pas bloquer le changement d'objet)
+			local bat = findBat()
+			if bat then
+				local currentTool = c:FindFirstChildOfClass("Tool")
+				if not currentTool then
+					-- Aucun outil en main, on prend la bat
+					local hum = c:FindFirstChildOfClass("Humanoid")
+					if hum then hum:EquipTool(bat) end
+				elseif currentTool ~= bat then
+					-- Un autre outil est tenu, on ne force pas la bat (le joueur peut changer librement)
+					-- On cède le contrôle de l'item au joueur
+				end
+				-- Si bat déjà équipée, on continue normalement
+			end
 			local hrp=c:FindFirstChild("HumanoidRootPart"); if hrp then
 				local target=getClosestPlayer()
 				if target and target.Character then
@@ -1080,7 +1103,7 @@ end
 -- GUI ROOT
 -- ============================================================
 local gui = Instance.new("ScreenGui")
-gui.Name="AXYRDUELHub"; gui.ResetOnSpawn=false; gui.DisplayOrder=10; gui.Parent=LP:WaitForChild("PlayerGui")
+gui.Name="AXYRDUELHub"; gui.ResetOnSpawn=false; gui.DisplayOrder=150; gui.Parent=LP:WaitForChild("PlayerGui")
 
 -- ============================================================
 -- SAVE / LOAD CONFIG
@@ -1105,6 +1128,132 @@ local function saveConfig()
 		medusaMode=G.medusaModeEnabled,
 		floatBtnPositions=G.floatBtnPositions,
 	})) end)
+end
+
+-- ============================================================
+-- HUD FIXE EN HAUT AU MILIEU — AxyrDuel FPS/Ping (non déplaçable)
+-- ============================================================
+do
+	local hud = Instance.new("Frame", gui)
+	hud.Name = "AxyrDuelHUD"
+	hud.Size = UDim2.new(0, 280, 0, 46)
+	hud.Position = UDim2.new(0.5, -140, 0, 6)
+	hud.BackgroundColor3 = Color3.fromRGB(10, 8, 20)
+	hud.BackgroundTransparency = 0.05
+	hud.BorderSizePixel = 0
+	hud.ZIndex = 200
+	hud.Active = false  -- non interactif = non déplaçable
+	addCorner(hud, 8)
+	addStroke(hud, C.ACCENT, 1.5, 0.25)
+
+	-- Accent line at top
+	local hudLine = Instance.new("Frame", hud)
+	hudLine.Size = UDim2.new(1, 0, 0, 2)
+	hudLine.Position = UDim2.new(0, 0, 0, 0)
+	hudLine.BackgroundColor3 = C.ACCENT
+	hudLine.BorderSizePixel = 0
+	hudLine.ZIndex = 201
+	addCorner(hudLine, 2)
+
+	-- AxyrDuel title (gauche)
+	local hudTitle = Instance.new("TextLabel", hud)
+	hudTitle.Size = UDim2.new(0, 96, 1, 0)
+	hudTitle.Position = UDim2.new(0, 8, 0, 0)
+	hudTitle.BackgroundTransparency = 1
+	hudTitle.Text = "◉ AxyrDuel"
+	hudTitle.TextColor3 = C.ACCENT2
+	hudTitle.Font = Enum.Font.GothamBlack
+	hudTitle.TextSize = 13
+	hudTitle.TextXAlignment = Enum.TextXAlignment.Left
+	hudTitle.ZIndex = 201
+
+	-- Séparateur
+	local hudSep = Instance.new("Frame", hud)
+	hudSep.Size = UDim2.new(0, 1, 0.6, 0)
+	hudSep.Position = UDim2.new(0, 108, 0.2, 0)
+	hudSep.BackgroundColor3 = C.BORDER
+	hudSep.BorderSizePixel = 0
+	hudSep.ZIndex = 201
+
+	-- FPS label (centre)
+	local hudFps = Instance.new("TextLabel", hud)
+	hudFps.Size = UDim2.new(0, 68, 0, 18)
+	hudFps.Position = UDim2.new(0, 114, 0, 4)
+	hudFps.BackgroundTransparency = 1
+	hudFps.Text = "FPS: --"
+	hudFps.TextColor3 = C.GREEN
+	hudFps.Font = Enum.Font.GothamBold
+	hudFps.TextSize = 12
+	hudFps.TextXAlignment = Enum.TextXAlignment.Center
+	hudFps.ZIndex = 201
+
+	-- Ping label (centre bas)
+	local hudPing = Instance.new("TextLabel", hud)
+	hudPing.Size = UDim2.new(0, 68, 0, 18)
+	hudPing.Position = UDim2.new(0, 114, 0, 24)
+	hudPing.BackgroundTransparency = 1
+	hudPing.Text = "Ping: --"
+	hudPing.TextColor3 = Color3.fromRGB(180, 160, 220)
+	hudPing.Font = Enum.Font.GothamBold
+	hudPing.TextSize = 12
+	hudPing.TextXAlignment = Enum.TextXAlignment.Center
+	hudPing.ZIndex = 201
+
+	-- Séparateur 2
+	local hudSep2 = Instance.new("Frame", hud)
+	hudSep2.Size = UDim2.new(0, 1, 0.6, 0)
+	hudSep2.Position = UDim2.new(0, 188, 0.2, 0)
+	hudSep2.BackgroundColor3 = C.BORDER
+	hudSep2.BorderSizePixel = 0
+	hudSep2.ZIndex = 201
+
+	-- Speed label (droite)
+	local hudSpd = Instance.new("TextLabel", hud)
+	hudSpd.Size = UDim2.new(0, 82, 1, 0)
+	hudSpd.Position = UDim2.new(0, 192, 0, 0)
+	hudSpd.BackgroundTransparency = 1
+	hudSpd.Text = "Spd\n--"
+	hudSpd.TextColor3 = C.DIM
+	hudSpd.Font = Enum.Font.GothamBold
+	hudSpd.TextSize = 11
+	hudSpd.TextXAlignment = Enum.TextXAlignment.Center
+	hudSpd.ZIndex = 201
+
+	-- FPS ticker pour le HUD
+	do local _hfc, _hfl = 0, tick()
+		RunService.RenderStepped:Connect(function()
+			_hfc = _hfc + 1
+			local now = tick()
+			if now - _hfl >= 0.5 then
+				local fps = math.floor(_hfc / (now - _hfl) + 0.5)
+				_hfc = 0; _hfl = now
+				hudFps.Text = "FPS: " .. fps
+				hudFps.TextColor3 = fps >= 60 and C.GREEN or fps >= 30 and Color3.fromRGB(255, 200, 50) or Color3.fromRGB(220, 80, 80)
+			end
+		end)
+	end
+	-- Ping ticker pour le HUD
+	do local _hpt = 0
+		RunService.Heartbeat:Connect(function()
+			local now = tick(); if now - _hpt < 2 then return end; _hpt = now
+			pcall(function()
+				local ping = math.floor(game:GetService("Stats").Network.ServerStatsItem["Data Ping"]:GetValue())
+				hudPing.Text = "Ping: " .. ping .. "ms"
+				hudPing.TextColor3 = ping < 80 and C.GREEN or ping < 150 and Color3.fromRGB(255, 200, 50) or Color3.fromRGB(220, 80, 80)
+			end)
+		end)
+	end
+	-- Speed ticker pour le HUD
+	do local _hst = 0
+		RunService.Heartbeat:Connect(function()
+			local now = tick(); if now - _hst < 0.1 then return end; _hst = now
+			local c = LP.Character; if not c then return end
+			local h = c:FindFirstChild("HumanoidRootPart"); if not h then return end
+			local spd = Vector3.new(h.AssemblyLinearVelocity.X, 0, h.AssemblyLinearVelocity.Z).Magnitude
+			hudSpd.Text = "Spd\n" .. string.format("%.0f", spd)
+			hudSpd.TextColor3 = spd > 30 and C.ACCENT2 or C.DIM
+		end)
+	end
 end
 
 -- ============================================================
@@ -2197,9 +2346,9 @@ end)
 -- BOUTONS FLOTTANTS INDEPENDANTS — chacun déplaçable seul
 -- ============================================================
 do
-	local BTN_W = 230  -- largeur zone label+toggle
-	local BTN_H = 62   -- hauteur
-	local KB_W  = 54   -- largeur zone keybind
+	local BTN_W = 180  -- largeur zone label+toggle
+	local BTN_H = 56   -- hauteur
+	local KB_W  = 52   -- largeur zone keybind
 
 	-- Table pour sauvegarder les positions des boutons flottants
 	if not G.floatBtnPositions then G.floatBtnPositions = {} end
@@ -2238,7 +2387,7 @@ do
 		lblEl.Text = label
 		lblEl.TextColor3 = C.WHITE
 		lblEl.Font = Enum.Font.GothamBlack
-		lblEl.TextSize = 16
+		lblEl.TextSize = 12
 		lblEl.TextXAlignment = Enum.TextXAlignment.Left
 		lblEl.ZIndex = 31
 
@@ -2286,7 +2435,7 @@ do
 		kbEl.Text = (keyName and KB[keyName]) and getKeyName(KB[keyName]) or "—"
 		kbEl.TextColor3 = colorAccent
 		kbEl.Font = Enum.Font.GothamBlack
-		kbEl.TextSize = 20
+		kbEl.TextSize = 15
 		kbEl.TextXAlignment = Enum.TextXAlignment.Center
 		kbEl.ZIndex = 31
 
@@ -2336,31 +2485,30 @@ do
 
 		UIS.InputEnded:Connect(function(inp)
 			if inp.UserInputType == Enum.UserInputType.MouseButton1 or inp.UserInputType == Enum.UserInputType.Touch then
-				if dragActive then
-					dragActive = false
-					if moved then
-						-- Sauvegarder la nouvelle position
-						G.floatBtnPositions[label] = {
-							x = math.floor(btn.AbsolutePosition.X),
-							y = math.floor(btn.AbsolutePosition.Y)
-						}
-						saveConfig()
+				if not dragActive then return end
+				dragActive = false
+				if moved then
+					-- Sauvegarder la nouvelle position
+					G.floatBtnPositions[label] = {
+						x = math.floor(btn.AbsolutePosition.X),
+						y = math.floor(btn.AbsolutePosition.Y)
+					}
+					saveConfig()
+				else
+					-- Clic = déclencher l'action
+					if isToggle ~= false then
+						isOn = not isOn
+						setVisual(isOn)
+						if onAction then onAction(isOn) end
 					else
-						-- Clic = déclencher l'action
-						if isToggle ~= false then
-							isOn = not isOn
-							setVisual(isOn)
-							if onAction then onAction(isOn) end
-						else
-							-- Flash visuel
-							btn.BackgroundColor3 = C.ON_BG
-							stroke.Color = colorAccent; stroke.Transparency = 0.05
-							task.delay(0.18, function()
-								btn.BackgroundColor3 = Color3.fromRGB(12, 9, 22)
-								stroke.Color = C.BORDER; stroke.Transparency = 0.3
-							end)
-							if onAction then onAction() end
-						end
+						-- Flash visuel
+						btn.BackgroundColor3 = C.ON_BG
+						stroke.Color = colorAccent; stroke.Transparency = 0.05
+						task.delay(0.18, function()
+							btn.BackgroundColor3 = Color3.fromRGB(12, 9, 22)
+							stroke.Color = C.BORDER; stroke.Transparency = 0.3
+						end)
+						if onAction then task.spawn(function() onAction() end) end
 					end
 				end
 			end
@@ -2388,7 +2536,34 @@ do
 		G_tpAutoEnabled = on
 		task.spawn(function() refreshMyPlotSide() end)
 		if G.tpAutoSetVisual then G.tpAutoSetVisual(on) end
+		-- Track Player active/désactive aussi le Bat Aimbot
+		G.autoBatEnabled = on
+		if on then
+			if G.autoPlayLeftEnabled or G.autoPlayRightEnabled then disableAllAutoPlay() end
+		end
+		if G.autoBatSetVisual then G.autoBatSetVisual(on) end
 	end, true)
+	-- Badge touche Bat Aimbot visible à côté du bouton Track Player
+	do
+		local trackFrame = gui:FindFirstChild("FloatBtn_TRACK PLAYER")
+		if trackFrame then
+			local batKeyBadge = Instance.new("TextLabel", trackFrame)
+			batKeyBadge.Name = "BatKeyBadge"
+			batKeyBadge.Size = UDim2.new(0, KB_W - 2, 0, 18)
+			batKeyBadge.Position = UDim2.new(1, -KB_W + 1, 0, BTN_H - 22)
+			batKeyBadge.BackgroundColor3 = Color3.fromRGB(22, 14, 44)
+			batKeyBadge.BorderSizePixel = 0
+			batKeyBadge.Text = getKeyName(KB.AutoBat)
+			batKeyBadge.TextColor3 = C.ORANGE
+			batKeyBadge.Font = Enum.Font.GothamBold
+			batKeyBadge.TextSize = 10
+			batKeyBadge.TextXAlignment = Enum.TextXAlignment.Center
+			batKeyBadge.ZIndex = 33
+			addCorner(batKeyBadge, 3)
+			addStroke(batKeyBadge, C.ORANGE, 1, 0.4)
+			G.allBadges["AutoBatSide"] = batKeyBadge
+		end
+	end
 	local floatSideV = makeFloatingBtn(LX, Y0 + YS,      "FLOAT",        "FloatToggle",  C.ACCENT2, function(on)
 		G.floatEnabled = on
 		if on then startFloat() else stopFloat() end
