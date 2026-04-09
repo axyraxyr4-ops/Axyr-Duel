@@ -38,15 +38,10 @@ local KB = {
 	SpeedToggle=Enum.KeyCode.Q, DropBrainrot=Enum.KeyCode.X, AutoLeft=Enum.KeyCode.Z, AutoRight=Enum.KeyCode.C,
 	AutoBat=Enum.KeyCode.E, TPLeft=Enum.KeyCode.V, TPRight=Enum.KeyCode.B,
 	AutoPlayLeft=Enum.KeyCode.J, AutoPlayRight=Enum.KeyCode.K, TPDown=Enum.KeyCode.G,
-	FloatToggle=Enum.KeyCode.F, AutoTP=Enum.KeyCode.T,
+	FloatToggle=Enum.KeyCode.F,
 }
 local G_myPlotSide  = nil
 local G_myPlotName  = nil
-local G_tpAutoBtn   = nil
-local G_tpAutoEnabled = false
-local G_autoPlayAfterTP = false
-local G_updateTPBtn = nil
-local doAutoTP
 local SPAWN_Z_RIGHT_THRESHOLD = 60
 local function detectMyPlot()
 	local plots = workspace:FindFirstChild("Plots")
@@ -74,7 +69,6 @@ end
 local function refreshMyPlotSide()
 	local side, plotName = detectMyPlot()
 	G_myPlotSide = side; G_myPlotName = plotName
-	if G_updateTPBtn then G_updateTPBtn() end
 	if G.refreshWPMarkers then
 		G.refreshWPMarkers()
 	else
@@ -85,7 +79,7 @@ end
 task.spawn(function()
 	while true do
 		task.wait(2)
-		if G_tpAutoEnabled or G._tpPollForce then refreshMyPlotSide() end
+		if G._tpPollForce then refreshMyPlotSide() end
 	end
 end)
 local function watchPlots()
@@ -806,14 +800,6 @@ local function doTeleport(pts, autoPlayAfter)
 		end
 	end)
 end
-doAutoTP = function()
-	if G.autoPlayLeftEnabled then stopAutoPlayLeft(); G.autoPlayLeftEnabled=false; if G.autoPlayLeftSetVisual then G.autoPlayLeftSetVisual(false) end end
-	if G.autoPlayRightEnabled then stopAutoPlayRight(); G.autoPlayRightEnabled=false; if G.autoPlayRightSetVisual then G.autoPlayRightSetVisual(false) end end
-	local side = G_myPlotSide or refreshMyPlotSide()
-	if side == "left" then
-		doTeleport("left", G_autoPlayAfterTP and "left_tp" or nil)
-	elseif side == "right" then doTeleport("right", G_autoPlayAfterTP and "right_tp" or nil) end
-end
 
 RunService.Heartbeat:Connect(function()
 	if G.brainrotCooldown or G.isStealing then return end
@@ -832,9 +818,6 @@ RunService.Heartbeat:Connect(function()
 			if G.autoPlayRightEnabled then stopAutoPlayRight(); if G.autoPlayRightSetVisual then G.autoPlayRightSetVisual(false) end end
 			unlockControls()
 		end
-		if not G_tpAutoEnabled then return end
-		if G_updateTPBtn then G_updateTPBtn() end
-		doAutoTP()
 	end
 end)
 
@@ -1116,10 +1099,8 @@ local function saveConfig()
 		speedToggleKey=KB.SpeedToggle.Name,dropBrainrotKey=KB.DropBrainrot.Name,autoLeftKey=KB.AutoLeft.Name,autoRightKey=KB.AutoRight.Name,
 		autoBatKey=KB.AutoBat.Name,tpLeftKey=KB.TPLeft.Name,tpRightKey=KB.TPRight.Name,
 		autoPlayLeftKey=KB.AutoPlayLeft.Name,autoPlayRightKey=KB.AutoPlayRight.Name,tpDownKey=KB.TPDown.Name,floatToggleKey=KB.FloatToggle.Name,
-		autoTPKey=KB.AutoTP.Name,
 		antiRagdoll=G.antiRagdollEnabled,autoStealEnabled=G.autoGrabEnabled,infiniteJump=G.infJumpEnabled,
 		medusaCounter=G.medusaCounterEnabled,brainrotReturnLeft=G.brainrotLeftEnabled,brainrotReturnRight=G.brainrotRightEnabled,
-		tpAutoEnabled=G_tpAutoEnabled,
 		carryMode=G.speedMode,autoBat=G.autoBatEnabled,autoSwing=G.autoSwingEnabled,autoPlayCountdown=G.autoPlayCountdownEnabled,
 		removeAccessories=G.removeAccessoriesEnabled,unwalk=G.unwalkEnabled,
 		shinyGraphics=G.shinyEnabled,optimizer=G.optimizerEnabled,ultraMode=G.ultraModeEnabled,
@@ -2723,7 +2704,7 @@ local function loadConfig()
 	applyKey("autoLeftKey","AutoLeft"); applyKey("autoRightKey","AutoRight")
 	applyKey("autoBatKey","AutoBat"); applyKey("tpLeftKey","TPLeft"); applyKey("tpRightKey","TPRight")
 	applyKey("autoPlayLeftKey","AutoPlayLeft"); applyKey("autoPlayRightKey","AutoPlayRight")
-	applyKey("tpDownKey","TPDown"); applyKey("floatToggleKey","FloatToggle"); applyKey("autoTPKey","AutoTP")
+	applyKey("tpDownKey","TPDown"); applyKey("floatToggleKey","FloatToggle")
 	if cfg.antiRagdoll~=nil then
 		G.antiRagdollEnabled=cfg.antiRagdoll
 		if G.antiRagdollEnabled then startAntiRagdoll() end
@@ -2736,27 +2717,6 @@ local function loadConfig()
 	if cfg.medusaCounter~=nil then G.medusaCounterEnabled=cfg.medusaCounter end
 	if cfg.brainrotReturnLeft~=nil then G.brainrotLeftEnabled=cfg.brainrotReturnLeft end
 	if cfg.brainrotReturnRight~=nil then G.brainrotRightEnabled=cfg.brainrotReturnRight end
-	if cfg.tpAutoEnabled then
-		G_tpAutoEnabled = true
-		task.spawn(function()
-			local plots=workspace:WaitForChild("Plots",30); if not plots then return end
-			local myName=LP.DisplayName or LP.Name
-			local found,deadline=false,tick()+60
-			while not found and tick()<deadline do
-				for _,plot in ipairs(plots:GetChildren()) do
-					pcall(function()
-						local tl=plot:FindFirstChild("PlotSign") and plot.PlotSign:FindFirstChild("SurfaceGui") and
-							plot.PlotSign.SurfaceGui:FindFirstChild("Frame") and plot.PlotSign.SurfaceGui.Frame:FindFirstChild("TextLabel")
-						if tl and tl.Text:find(myName,1,true) then found=true end
-					end)
-					if found then break end
-				end
-				if not found then task.wait(0.3) end
-			end
-			refreshMyPlotSide()
-			if G.refreshWPMarkers then G.refreshWPMarkers() end
-		end)
-	end
 	if cfg.carryMode~=nil then G.speedMode=cfg.carryMode end
 	if cfg.autoBat~=nil then G.autoBatEnabled=cfg.autoBat end
 	if cfg.autoSwing~=nil then G.autoSwingEnabled=cfg.autoSwing end
