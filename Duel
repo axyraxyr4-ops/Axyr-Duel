@@ -32,6 +32,7 @@ local G = {
 	_dtSmooth=1/60, radValInBar=nil, radMobBtn=nil,
 	brainrotLeftBtn=nil, brainrotRightBtn=nil,
 	medusaModeEnabled=false, medusaModeSetVisual=nil,
+	floatBtnPositions={},
 }
 local KB = {
 	SpeedToggle=Enum.KeyCode.Q, DropBrainrot=Enum.KeyCode.X, AutoLeft=Enum.KeyCode.Z, AutoRight=Enum.KeyCode.C,
@@ -1131,7 +1132,7 @@ local function saveConfig()
 end
 
 -- ============================================================
--- HUD FIXE EN HAUT AU MILIEU — AxyrDuel FPS/Ping (non déplaçable)
+-- HUD EN HAUT — AxyrDuel + FPS + Ping + Speed
 -- ============================================================
 do
 	local hud = Instance.new("Frame", gui)
@@ -1142,116 +1143,79 @@ do
 	hud.BackgroundTransparency = 0.05
 	hud.BorderSizePixel = 0
 	hud.ZIndex = 200
-	hud.Active = false  -- non interactif = non déplaçable
+	hud.Active = false
 	addCorner(hud, 8)
 	addStroke(hud, C.ACCENT, 1.5, 0.25)
 
-	-- Accent line at top
 	local hudLine = Instance.new("Frame", hud)
-	hudLine.Size = UDim2.new(1, 0, 0, 2)
-	hudLine.Position = UDim2.new(0, 0, 0, 0)
-	hudLine.BackgroundColor3 = C.ACCENT
-	hudLine.BorderSizePixel = 0
-	hudLine.ZIndex = 201
+	hudLine.Size = UDim2.new(1, 0, 0, 2); hudLine.Position = UDim2.new(0,0,0,0)
+	hudLine.BackgroundColor3 = C.ACCENT; hudLine.BorderSizePixel = 0; hudLine.ZIndex = 201
 	addCorner(hudLine, 2)
 
-	-- AxyrDuel title (gauche)
 	local hudTitle = Instance.new("TextLabel", hud)
-	hudTitle.Size = UDim2.new(0, 96, 1, 0)
-	hudTitle.Position = UDim2.new(0, 8, 0, 0)
-	hudTitle.BackgroundTransparency = 1
-	hudTitle.Text = "◉ AxyrDuel"
-	hudTitle.TextColor3 = C.ACCENT2
-	hudTitle.Font = Enum.Font.GothamBlack
-	hudTitle.TextSize = 13
-	hudTitle.TextXAlignment = Enum.TextXAlignment.Left
-	hudTitle.ZIndex = 201
+	hudTitle.Size = UDim2.new(0, 96, 1, 0); hudTitle.Position = UDim2.new(0, 8, 0, 0)
+	hudTitle.BackgroundTransparency = 1; hudTitle.Text = "◉ AxyrDuel"
+	hudTitle.TextColor3 = C.ACCENT2; hudTitle.Font = Enum.Font.GothamBlack
+	hudTitle.TextSize = 13; hudTitle.TextXAlignment = Enum.TextXAlignment.Left; hudTitle.ZIndex = 201
 
-	-- Séparateur
 	local hudSep = Instance.new("Frame", hud)
-	hudSep.Size = UDim2.new(0, 1, 0.6, 0)
-	hudSep.Position = UDim2.new(0, 108, 0.2, 0)
-	hudSep.BackgroundColor3 = C.BORDER
-	hudSep.BorderSizePixel = 0
-	hudSep.ZIndex = 201
+	hudSep.Size = UDim2.new(0,1,0.6,0); hudSep.Position = UDim2.new(0,108,0.2,0)
+	hudSep.BackgroundColor3 = C.BORDER; hudSep.BorderSizePixel = 0; hudSep.ZIndex = 201
 
-	-- FPS label (centre)
 	local hudFps = Instance.new("TextLabel", hud)
-	hudFps.Size = UDim2.new(0, 68, 0, 18)
-	hudFps.Position = UDim2.new(0, 114, 0, 4)
-	hudFps.BackgroundTransparency = 1
-	hudFps.Text = "FPS: --"
-	hudFps.TextColor3 = C.GREEN
-	hudFps.Font = Enum.Font.GothamBold
-	hudFps.TextSize = 12
-	hudFps.TextXAlignment = Enum.TextXAlignment.Center
-	hudFps.ZIndex = 201
+	hudFps.Size = UDim2.new(0,68,0,18); hudFps.Position = UDim2.new(0,114,0,4)
+	hudFps.BackgroundTransparency = 1; hudFps.Text = "FPS: --"
+	hudFps.TextColor3 = C.GREEN; hudFps.Font = Enum.Font.GothamBold
+	hudFps.TextSize = 12; hudFps.TextXAlignment = Enum.TextXAlignment.Center; hudFps.ZIndex = 201
 
-	-- Ping label (centre bas)
 	local hudPing = Instance.new("TextLabel", hud)
-	hudPing.Size = UDim2.new(0, 68, 0, 18)
-	hudPing.Position = UDim2.new(0, 114, 0, 24)
-	hudPing.BackgroundTransparency = 1
-	hudPing.Text = "Ping: --"
-	hudPing.TextColor3 = Color3.fromRGB(180, 160, 220)
-	hudPing.Font = Enum.Font.GothamBold
-	hudPing.TextSize = 12
-	hudPing.TextXAlignment = Enum.TextXAlignment.Center
-	hudPing.ZIndex = 201
+	hudPing.Size = UDim2.new(0,68,0,18); hudPing.Position = UDim2.new(0,114,0,24)
+	hudPing.BackgroundTransparency = 1; hudPing.Text = "Ping: --"
+	hudPing.TextColor3 = Color3.fromRGB(180,160,220); hudPing.Font = Enum.Font.GothamBold
+	hudPing.TextSize = 12; hudPing.TextXAlignment = Enum.TextXAlignment.Center; hudPing.ZIndex = 201
 
-	-- Séparateur 2
 	local hudSep2 = Instance.new("Frame", hud)
-	hudSep2.Size = UDim2.new(0, 1, 0.6, 0)
-	hudSep2.Position = UDim2.new(0, 188, 0.2, 0)
-	hudSep2.BackgroundColor3 = C.BORDER
-	hudSep2.BorderSizePixel = 0
-	hudSep2.ZIndex = 201
+	hudSep2.Size = UDim2.new(0,1,0.6,0); hudSep2.Position = UDim2.new(0,188,0.2,0)
+	hudSep2.BackgroundColor3 = C.BORDER; hudSep2.BorderSizePixel = 0; hudSep2.ZIndex = 201
 
-	-- Speed label (droite)
 	local hudSpd = Instance.new("TextLabel", hud)
-	hudSpd.Size = UDim2.new(0, 82, 1, 0)
-	hudSpd.Position = UDim2.new(0, 192, 0, 0)
-	hudSpd.BackgroundTransparency = 1
-	hudSpd.Text = "Spd\n--"
-	hudSpd.TextColor3 = C.DIM
-	hudSpd.Font = Enum.Font.GothamBold
-	hudSpd.TextSize = 11
-	hudSpd.TextXAlignment = Enum.TextXAlignment.Center
-	hudSpd.ZIndex = 201
+	hudSpd.Size = UDim2.new(0,82,1,0); hudSpd.Position = UDim2.new(0,192,0,0)
+	hudSpd.BackgroundTransparency = 1; hudSpd.Text = "Spd\n--"
+	hudSpd.TextColor3 = C.DIM; hudSpd.Font = Enum.Font.GothamBold
+	hudSpd.TextSize = 11; hudSpd.TextXAlignment = Enum.TextXAlignment.Center; hudSpd.ZIndex = 201
 
-	-- FPS ticker pour le HUD
-	do local _hfc, _hfl = 0, tick()
+	-- spdDisplayLbl pointe vers hudSpd pour la mise à jour vitesse
+	spdDisplayLbl = hudSpd
+	G.speedLabel = hudSpd
+
+	do local _hfc,_hfl=0,tick()
 		RunService.RenderStepped:Connect(function()
-			_hfc = _hfc + 1
-			local now = tick()
-			if now - _hfl >= 0.5 then
-				local fps = math.floor(_hfc / (now - _hfl) + 0.5)
-				_hfc = 0; _hfl = now
-				hudFps.Text = "FPS: " .. fps
-				hudFps.TextColor3 = fps >= 60 and C.GREEN or fps >= 30 and Color3.fromRGB(255, 200, 50) or Color3.fromRGB(220, 80, 80)
+			_hfc=_hfc+1; local now=tick()
+			if now-_hfl>=0.5 then
+				local fps=math.floor(_hfc/(now-_hfl)+0.5); _hfc=0; _hfl=now
+				hudFps.Text="FPS: "..fps
+				hudFps.TextColor3=fps>=60 and C.GREEN or fps>=30 and Color3.fromRGB(255,200,50) or Color3.fromRGB(220,80,80)
 			end
 		end)
 	end
-	-- Ping ticker pour le HUD
-	do local _hpt = 0
+	do local _hpt=0
 		RunService.Heartbeat:Connect(function()
-			local now = tick(); if now - _hpt < 2 then return end; _hpt = now
+			local now=tick(); if now-_hpt<2 then return end; _hpt=now
 			pcall(function()
-				local ping = math.floor(game:GetService("Stats").Network.ServerStatsItem["Data Ping"]:GetValue())
-				hudPing.Text = "Ping: " .. ping .. "ms"
-				hudPing.TextColor3 = ping < 80 and C.GREEN or ping < 150 and Color3.fromRGB(255, 200, 50) or Color3.fromRGB(220, 80, 80)
+				local ping=math.floor(game:GetService("Stats").Network.ServerStatsItem["Data Ping"]:GetValue())
+				hudPing.Text="Ping: "..ping.."ms"
+				hudPing.TextColor3=ping<80 and C.GREEN or ping<150 and Color3.fromRGB(255,200,50) or Color3.fromRGB(220,80,80)
 			end)
 		end)
 	end
-	-- Speed ticker pour le HUD
-	do local _hst = 0
+	do local _hst=0
 		RunService.Heartbeat:Connect(function()
-			local now = tick(); if now - _hst < 0.1 then return end; _hst = now
-			local c = LP.Character; if not c then return end
-			local h = c:FindFirstChild("HumanoidRootPart"); if not h then return end
-			local spd = Vector3.new(h.AssemblyLinearVelocity.X, 0, h.AssemblyLinearVelocity.Z).Magnitude
-			hudSpd.Text = "Spd\n" .. string.format("%.0f", spd)
-			hudSpd.TextColor3 = spd > 30 and C.ACCENT2 or C.DIM
+			local now=tick(); if now-_hst<0.1 then return end; _hst=now
+			local c=LP.Character; if not c then return end
+			local h=c:FindFirstChild("HumanoidRootPart"); if not h then return end
+			local spd=Vector3.new(h.AssemblyLinearVelocity.X,0,h.AssemblyLinearVelocity.Z).Magnitude
+			hudSpd.Text="Spd\n"..string.format("%.0f",spd)
+			hudSpd.TextColor3=spd>30 and C.ACCENT2 or C.DIM
 		end)
 	end
 end
@@ -1261,7 +1225,7 @@ end
 -- ============================================================
 local StealBar = Instance.new("Frame", gui)
 StealBar.Name = "StealBar"; StealBar.Size = UDim2.new(0,320,0,54)
-StealBar.Position = UDim2.new(0.5,-160,1,-110)
+StealBar.Position = UDim2.new(0.5,-160,1,-140)
 StealBar.BackgroundColor3 = Color3.fromRGB(12,10,22); StealBar.BackgroundTransparency = 0.08
 StealBar.BorderSizePixel = 0; StealBar.Visible = false; StealBar.ZIndex = 10; StealBar.Active = true
 addCorner(StealBar, 10); addStroke(StealBar, C.ACCENT, 1.5, 0.3)
@@ -1376,80 +1340,19 @@ accentLine.Position = UDim2.new(0, 0, 0, 56)
 accentLine.BackgroundColor3 = C.ACCENT
 accentLine.BorderSizePixel = 0
 
--- Avatar
-local avatarFrame = Instance.new("Frame", header)
-avatarFrame.Size = UDim2.new(0, 34, 0, 34)
-avatarFrame.Position = UDim2.new(0, 8, 0.5, -17)
-avatarFrame.BackgroundColor3 = C.CARD2
-avatarFrame.BorderSizePixel = 0
-addCorner(avatarFrame, 17)
-addStroke(avatarFrame, C.ACCENT, 1.5, 0.2)
-local avatarImg = Instance.new("ImageLabel", avatarFrame)
-avatarImg.Size = UDim2.new(1, -4, 1, -4)
-avatarImg.Position = UDim2.new(0, 2, 0, 2)
-avatarImg.BackgroundTransparency = 1
-avatarImg.BorderSizePixel = 0
-addCorner(avatarImg, 15)
-pcall(function() avatarImg.Image = "https://www.roblox.com/headshot-thumbnail/image?userId="..LP.UserId.."&width=48&height=48&format=png" end)
+-- Titre AxyrDuel dans le header — pas de FPS/Ping ici
+local headerTitle = Instance.new("TextLabel", header)
+headerTitle.Size = UDim2.new(1, -10, 1, 0)
+headerTitle.Position = UDim2.new(0, 8, 0, 0)
+headerTitle.BackgroundTransparency = 1
+headerTitle.Text = "AxyrDuel"
+headerTitle.TextColor3 = C.ACCENT2
+headerTitle.Font = Enum.Font.GothamBlack
+headerTitle.TextSize = 18
+headerTitle.TextXAlignment = Enum.TextXAlignment.Left
 
--- Username + badge
-local userLbl = Instance.new("TextLabel", header)
-userLbl.Size = UDim2.new(0, 110, 0, 16)
-userLbl.Position = UDim2.new(0, 48, 0, 8)
-userLbl.BackgroundTransparency = 1
-userLbl.Text = "@"..(LP.DisplayName or LP.Name)
-userLbl.TextColor3 = C.WHITE
-userLbl.Font = Enum.Font.GothamBlack
-userLbl.TextSize = 11
-userLbl.TextXAlignment = Enum.TextXAlignment.Left
-userLbl.TextTruncate = Enum.TextTruncate.AtEnd
-
-local badgeFrame = Instance.new("Frame", header)
-badgeFrame.Size = UDim2.new(0, 60, 0, 14)
-badgeFrame.Position = UDim2.new(0, 48, 0, 27)
-badgeFrame.BackgroundColor3 = C.ACCENT
-badgeFrame.BorderSizePixel = 0
-addCorner(badgeFrame, 3)
-local badgeLbl = Instance.new("TextLabel", badgeFrame)
-badgeLbl.Size = UDim2.new(1, 0, 1, 0)
-badgeLbl.BackgroundTransparency = 1
-badgeLbl.Text = "AXYRDUEL"
-badgeLbl.TextColor3 = Color3.fromRGB(255,255,255)
-badgeLbl.Font = Enum.Font.GothamBlack
-badgeLbl.TextSize = 8
-
--- FPS / Ping labels
-local fpsLbl = Instance.new("TextLabel", header)
-fpsLbl.Size = UDim2.new(0, 60, 0, 13)
-fpsLbl.Position = UDim2.new(1, -130, 0, 6)
-fpsLbl.BackgroundTransparency = 1
-fpsLbl.Text = "FPS: --"
-fpsLbl.TextColor3 = C.GREEN
-fpsLbl.Font = Enum.Font.GothamBold
-fpsLbl.TextSize = 9
-fpsLbl.TextXAlignment = Enum.TextXAlignment.Right
-
-local pingLbl = Instance.new("TextLabel", header)
-pingLbl.Size = UDim2.new(0, 60, 0, 13)
-pingLbl.Position = UDim2.new(1, -130, 0, 20)
-pingLbl.BackgroundTransparency = 1
-pingLbl.Text = "Ping: --"
-pingLbl.TextColor3 = Color3.fromRGB(200, 200, 210)
-pingLbl.Font = Enum.Font.GothamBold
-pingLbl.TextSize = 9
-pingLbl.TextXAlignment = Enum.TextXAlignment.Right
-
--- Speed display in header
-local spdDisplayLbl = Instance.new("TextLabel", header)
-spdDisplayLbl.Size = UDim2.new(0, 60, 0, 13)
-spdDisplayLbl.Position = UDim2.new(1, -130, 0, 34)
-spdDisplayLbl.BackgroundTransparency = 1
-spdDisplayLbl.Text = "Spd: 0.0"
-spdDisplayLbl.TextColor3 = C.DIM
-spdDisplayLbl.Font = Enum.Font.GothamBold
-spdDisplayLbl.TextSize = 9
-spdDisplayLbl.TextXAlignment = Enum.TextXAlignment.Right
-G.speedLabel = spdDisplayLbl
+-- variable spdDisplayLbl utilisée par le billboard (pointe vers le HUD, défini plus bas)
+local spdDisplayLbl
 
 -- ============================================================
 -- SPEED BILLBOARD au-dessus du personnage — texte flottant épuré
@@ -1527,7 +1430,7 @@ do local _bbt=0; RunService.Heartbeat:Connect(function()
 		_speedBBModeLbl.Text = "NORMAL  "..tostring(G.NS)
 		_speedBBModeLbl.TextColor3 = C.DIM
 	end
-	spdDisplayLbl.Text = "Spd: "..spdTxt
+	spdDisplayLbl.Text = "Spd\n"..string.format("%.0f",spd)
 end) end
 
 -- ============================================================
@@ -1537,7 +1440,7 @@ do
 	local lockFrame = Instance.new("TextButton", gui)
 	lockFrame.Name = "LockBtn"
 	lockFrame.Size = UDim2.new(0, 54, 0, 44)
-	lockFrame.Position = UDim2.new(0.5, -27, 1, -162)  -- juste au-dessus du StealBar (1,-110 - 54 - 8 = -172, +légère marge)
+	lockFrame.Position = UDim2.new(0.5, -27, 1, -192)  -- juste au-dessus du StealBar (1,-140 - 54 - 8 = -202, +légère marge)
 	lockFrame.BackgroundColor3 = Color3.fromRGB(16, 12, 28)
 	lockFrame.BackgroundTransparency = 0.1
 	lockFrame.BorderSizePixel = 0
@@ -1568,67 +1471,55 @@ do
 	end)
 end
 
--- Close button
+-- Close button — croix rouge stylée
 local closeBtn = Instance.new("TextButton", header)
-closeBtn.Size = UDim2.new(0, 22, 0, 22)
-closeBtn.Position = UDim2.new(1, -26, 0.5, -11)
-closeBtn.BackgroundColor3 = C.ACCENT
+closeBtn.Size = UDim2.new(0, 26, 0, 26)
+closeBtn.Position = UDim2.new(1, -30, 0.5, -13)
+closeBtn.BackgroundColor3 = Color3.fromRGB(160, 30, 30)
 closeBtn.BorderSizePixel = 0
-closeBtn.Text = "✕"
+closeBtn.Text = "X"
 closeBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-closeBtn.Font = Enum.Font.GothamBold
-closeBtn.TextSize = 11
-addCorner(closeBtn, 5)
+closeBtn.Font = Enum.Font.GothamBlack
+closeBtn.TextSize = 14
+addCorner(closeBtn, 6)
+addStroke(closeBtn, Color3.fromRGB(220, 50, 50), 1.5, 0.2)
+closeBtn.MouseEnter:Connect(function()
+	closeBtn.BackgroundColor3 = Color3.fromRGB(210, 40, 40)
+end)
+closeBtn.MouseLeave:Connect(function()
+	closeBtn.BackgroundColor3 = Color3.fromRGB(160, 30, 30)
+end)
 
--- Save button (à gauche du close)
+-- Save button — bouton vert "SAVE CONFIG"
 local saveBtn = Instance.new("TextButton", header)
-saveBtn.Size = UDim2.new(0, 36, 0, 22)
-saveBtn.Position = UDim2.new(1, -66, 0.5, -11)
-saveBtn.BackgroundColor3 = Color3.fromRGB(20, 60, 30)
+saveBtn.Size = UDim2.new(0, 90, 0, 26)
+saveBtn.Position = UDim2.new(1, -124, 0.5, -13)
+saveBtn.BackgroundColor3 = Color3.fromRGB(22, 100, 40)
 saveBtn.BorderSizePixel = 0
-saveBtn.Text = "💾"
-saveBtn.TextColor3 = C.GREEN
-saveBtn.Font = Enum.Font.GothamBold
-saveBtn.TextSize = 13
-addCorner(saveBtn, 5)
-addStroke(saveBtn, C.GREEN, 1, 0.5)
+saveBtn.Text = "SAVE CONFIG"
+saveBtn.TextColor3 = Color3.fromRGB(180, 255, 180)
+saveBtn.Font = Enum.Font.GothamBlack
+saveBtn.TextSize = 10
+addCorner(saveBtn, 6)
+addStroke(saveBtn, C.GREEN, 1.5, 0.3)
 do
 	local _saveCooldown = false
 	saveBtn.MouseButton1Click:Connect(function()
 		if _saveCooldown then return end
 		_saveCooldown = true
 		saveConfig()
-		-- Feedback visuel : flash vert
-		saveBtn.BackgroundColor3 = Color3.fromRGB(30, 110, 50)
-		saveBtn.Text = "✓"
+		saveBtn.BackgroundColor3 = Color3.fromRGB(30, 140, 60)
+		saveBtn.Text = "✓ SAUVÉ"
 		task.delay(0.8, function()
-			saveBtn.BackgroundColor3 = Color3.fromRGB(20, 60, 30)
-			saveBtn.Text = "💾"
+			saveBtn.BackgroundColor3 = Color3.fromRGB(22, 100, 40)
+			saveBtn.Text = "SAVE CONFIG"
 			_saveCooldown = false
 		end)
 	end)
 end
 
--- FPS ticker
-do local _fc,_fl=0,tick()
-	RunService.RenderStepped:Connect(function()
-		_fc=_fc+1; local now=tick()
-		if now-_fl>=0.5 then
-			local fps=math.floor(_fc/(now-_fl)+0.5); _fc=0; _fl=now; fpsLbl.Text="FPS: "..fps
-			fpsLbl.TextColor3=fps>=60 and C.GREEN or fps>=30 and Color3.fromRGB(255,200,50) or Color3.fromRGB(200,200,210)
-		end
-	end)
-end
-do local _pt=0; RunService.Heartbeat:Connect(function()
-	local now=tick(); if now-_pt<2 then return end; _pt=now
-	pcall(function()
-		local ping=math.floor(game:GetService("Stats").Network.ServerStatsItem["Data Ping"]:GetValue())
-		pingLbl.Text="Ping: "..ping.."ms"
-		pingLbl.TextColor3=ping<80 and C.GREEN or ping<150 and Color3.fromRGB(255,200,50) or Color3.fromRGB(200,200,210)
-	end)
-end) end
-
 -- (speed heartbeat géré par le BillboardGui ci-dessus)
+
 
 -- ---- TABS ----
 local TAB_NAMES = {"Movement","Teleport","Auto","Defense","Visual"}
@@ -1928,61 +1819,134 @@ buildWPOffsetPanel = function(side)
 	end
 	_wpPanelSide = side
 	local offsets  = side == "left" and AP_Offsets  or APR_Offsets
-	local label    = side == "left" and "LEFT" or "RIGHT"
+	local label    = side == "left" and "RESTANT" or "RIGHT"
 	local color    = side == "left" and Color3.fromRGB(80,180,255) or Color3.fromRGB(255,100,80)
 	local WP_COLORS = {Color3.fromRGB(80,180,255),Color3.fromRGB(100,255,120),Color3.fromRGB(255,220,50),Color3.fromRGB(255,80,160)}
 	local AX_COLORS = {Color3.fromRGB(255,110,110),Color3.fromRGB(100,180,255)}
-	local HDR_H=28; local COL_W=46; local COL_GAP=6; local PAD=8
-	local panelW = PAD + 4*COL_W + 3*COL_GAP + PAD
-	local panelH = HDR_H + 14 + (10+18)*2 + 16
+
+	local COL_W=52; local COL_GAP=6; local PAD=10
+	local HDR_H=44; local ROW_H=30; local AX_COUNT=2
+	local panelW = PAD + 4*(COL_W+COL_GAP) - COL_GAP + PAD
+	local panelH = HDR_H + 2 + PAD + (18 + AX_COUNT*(12+ROW_H)) + PAD
+
+	-- Panel — exactement comme le main GUI
 	local panel = Instance.new("Frame", gui)
-	panel.Name="WPOffsetPanel"; panel.Size=UDim2.new(0,panelW,0,panelH); panel.Position=UDim2.new(0,320,0,200)
-	panel.BackgroundColor3=C.BG; panel.BorderSizePixel=0; panel.Active=true; panel.ZIndex=50
-	addCorner(panel,10); addStroke(panel,color,1.5,0.3); makeDraggable(panel)
-	local hdrBar=Instance.new("Frame",panel); hdrBar.Size=UDim2.new(1,0,0,HDR_H)
-	hdrBar.BackgroundColor3=Color3.fromRGB(14,12,26); hdrBar.BorderSizePixel=0; hdrBar.ZIndex=51; addCorner(hdrBar,10)
-	local hdrFix=Instance.new("Frame",panel); hdrFix.Size=UDim2.new(1,0,0,10); hdrFix.Position=UDim2.new(0,0,0,HDR_H-10)
-	hdrFix.BackgroundColor3=Color3.fromRGB(14,12,26); hdrFix.BorderSizePixel=0; hdrFix.ZIndex=51
-	local hdrLbl=Instance.new("TextLabel",hdrBar); hdrLbl.Size=UDim2.new(1,-80,1,0); hdrLbl.Position=UDim2.new(0,10,0,0)
+	panel.Name="WPOffsetPanel"
+	panel.Size=UDim2.new(0,panelW,0,panelH)
+	panel.Position=UDim2.new(0,320,0,200)
+	panel.BackgroundColor3=C.BG
+	panel.BorderSizePixel=0; panel.Active=true; panel.ZIndex=50
+	panel.ClipsDescendants=true
+	addCorner(panel,12)
+	addStroke(panel,C.BORDER,1.5,0.2)
+	makeDraggable(panel)
+
+	-- Header — identique au header du main GUI
+	local hdr=Instance.new("Frame",panel)
+	hdr.Size=UDim2.new(1,0,0,HDR_H); hdr.BackgroundColor3=C.HEADER; hdr.BorderSizePixel=0; hdr.ZIndex=51
+	addCorner(hdr,12)
+	local hdrFix=Instance.new("Frame",panel)
+	hdrFix.Size=UDim2.new(1,0,0,12); hdrFix.Position=UDim2.new(0,0,0,HDR_H-12)
+	hdrFix.BackgroundColor3=C.HEADER; hdrFix.BorderSizePixel=0; hdrFix.ZIndex=51
+
+	-- Ligne accent sous header (couleur de côté comme le main utilise C.ACCENT)
+	local accentL=Instance.new("Frame",panel)
+	accentL.Size=UDim2.new(1,0,0,2); accentL.Position=UDim2.new(0,0,0,HDR_H)
+	accentL.BackgroundColor3=C.ACCENT; accentL.BorderSizePixel=0; accentL.ZIndex=52
+
+	-- Titre header
+	local hdrLbl=Instance.new("TextLabel",hdr)
+	hdrLbl.Size=UDim2.new(1,-90,1,0); hdrLbl.Position=UDim2.new(0,10,0,0)
 	hdrLbl.BackgroundTransparency=1; hdrLbl.Text="OFFSET  "..label
-	hdrLbl.Font=Enum.Font.GothamBlack; hdrLbl.TextSize=11; hdrLbl.TextColor3=color
+	hdrLbl.Font=Enum.Font.GothamBlack; hdrLbl.TextSize=14; hdrLbl.TextColor3=color
 	hdrLbl.TextXAlignment=Enum.TextXAlignment.Left; hdrLbl.ZIndex=52
-	local rstBtn=Instance.new("TextButton",hdrBar); rstBtn.Size=UDim2.new(0,32,0,18); rstBtn.Position=UDim2.new(1,-58,0.5,-9)
-	rstBtn.BackgroundColor3=C.CARD2; rstBtn.BorderSizePixel=0
-	rstBtn.Text="RST"; rstBtn.TextColor3=C.WHITE; rstBtn.Font=Enum.Font.GothamBlack; rstBtn.TextSize=9; rstBtn.ZIndex=53
-	addCorner(rstBtn,4)
+
+	-- RST button — style saveBtn du main GUI
+	local rstBtn=Instance.new("TextButton",hdr)
+	rstBtn.Size=UDim2.new(0,38,0,24); rstBtn.Position=UDim2.new(1,-70,0.5,-12)
+	rstBtn.BackgroundColor3=Color3.fromRGB(16,14,30); rstBtn.BorderSizePixel=0
+	rstBtn.Text="RST"; rstBtn.TextColor3=C.DIM; rstBtn.Font=Enum.Font.GothamBlack; rstBtn.TextSize=10; rstBtn.ZIndex=53
+	addCorner(rstBtn,6); addStroke(rstBtn,C.BORDER,1,0.4)
+	rstBtn.MouseEnter:Connect(function() rstBtn.TextColor3=C.WHITE end)
+	rstBtn.MouseLeave:Connect(function() rstBtn.TextColor3=C.DIM end)
 	rstBtn.MouseButton1Click:Connect(function()
 		for i=1,4 do offsets[i]={x=0,y=0,z=0} end
 		saveConfig(); if G.refreshWPMarkers then G.refreshWPMarkers() end
 		panel:Destroy(); _wpPanelSide=nil; buildWPOffsetPanel(side)
 	end)
-	local cxBtn=Instance.new("TextButton",hdrBar); cxBtn.Size=UDim2.new(0,20,0,18); cxBtn.Position=UDim2.new(1,-24,0.5,-9)
-	cxBtn.BackgroundColor3=C.ACCENT; cxBtn.BorderSizePixel=0
-	cxBtn.Text="X"; cxBtn.TextColor3=Color3.fromRGB(255,255,255); cxBtn.Font=Enum.Font.GothamBlack; cxBtn.TextSize=10; cxBtn.ZIndex=53; addCorner(cxBtn,4)
+
+	-- X button — identique au closeBtn du main GUI
+	local cxBtn=Instance.new("TextButton",hdr)
+	cxBtn.Size=UDim2.new(0,26,0,26); cxBtn.Position=UDim2.new(1,-30,0.5,-13)
+	cxBtn.BackgroundColor3=Color3.fromRGB(160,30,30); cxBtn.BorderSizePixel=0
+	cxBtn.Text="X"; cxBtn.TextColor3=Color3.fromRGB(255,255,255); cxBtn.Font=Enum.Font.GothamBlack; cxBtn.TextSize=13; cxBtn.ZIndex=53
+	addCorner(cxBtn,6); addStroke(cxBtn,Color3.fromRGB(220,50,50),1.5,0.2)
+	cxBtn.MouseEnter:Connect(function() cxBtn.BackgroundColor3=Color3.fromRGB(210,40,40) end)
+	cxBtn.MouseLeave:Connect(function() cxBtn.BackgroundColor3=Color3.fromRGB(160,30,30) end)
 	cxBtn.MouseButton1Click:Connect(function() panel:Destroy(); _wpPanelSide=nil end)
+
+	-- Contenu — colonnes waypoints dans des cartes style C.CARD
 	local prefix = side=="left" and "L" or "R"
+	local CONTENT_Y = HDR_H + 2 + PAD
+
 	for i=1,4 do
-		local colX = PAD + (i-1)*(COL_W+COL_GAP); local off = offsets[i]; local wcolor = WP_COLORS[i]
-		local wlbl=Instance.new("TextLabel",panel); wlbl.Size=UDim2.new(0,COL_W,0,14); wlbl.Position=UDim2.new(0,colX,0,HDR_H+4)
-		wlbl.BackgroundTransparency=1; wlbl.Text=prefix..i; wlbl.Font=Enum.Font.GothamBlack; wlbl.TextSize=11; wlbl.TextColor3=wcolor
-		wlbl.TextXAlignment=Enum.TextXAlignment.Center; wlbl.ZIndex=51
-		local underline=Instance.new("Frame",panel); underline.Size=UDim2.new(0,COL_W-4,0,2); underline.Position=UDim2.new(0,colX+2,0,HDR_H+18)
-		underline.BackgroundColor3=wcolor; underline.BorderSizePixel=0; underline.ZIndex=51; addCorner(underline,1)
+		local colX = PAD + (i-1)*(COL_W+COL_GAP)
+		local off = offsets[i]; local wcolor = WP_COLORS[i]
+
+		-- En-tête colonne : label waypoint + underline (style section du GUI)
+		local wlbl=Instance.new("TextLabel",panel)
+		wlbl.Size=UDim2.new(0,COL_W,0,16); wlbl.Position=UDim2.new(0,colX,0,CONTENT_Y)
+		wlbl.BackgroundTransparency=1; wlbl.Text=prefix..i
+		wlbl.Font=Enum.Font.GothamBlack; wlbl.TextSize=11; wlbl.TextColor3=wcolor
+		wlbl.TextXAlignment=Enum.TextXAlignment.Center; wlbl.ZIndex=52
+
+		local ul=Instance.new("Frame",panel)
+		ul.Size=UDim2.new(0,COL_W-8,0,2); ul.Position=UDim2.new(0,colX+4,0,CONTENT_Y+16)
+		ul.BackgroundColor3=wcolor; ul.BorderSizePixel=0; ul.ZIndex=52; addCorner(ul,1)
+
+		-- Axes x et z — chacun dans une carte C.CARD style toggle row
 		local axes={"x","z"}
 		for j,axis in ipairs(axes) do
-			local axColor=AX_COLORS[j]; local rowY = HDR_H + 22 + (j-1)*28
-			local axLbl=Instance.new("TextLabel",panel); axLbl.Size=UDim2.new(0,COL_W,0,10); axLbl.Position=UDim2.new(0,colX,0,rowY)
-			axLbl.BackgroundTransparency=1; axLbl.Text=axis:upper(); axLbl.Font=Enum.Font.GothamBlack; axLbl.TextSize=8; axLbl.TextColor3=axColor
-			axLbl.TextXAlignment=Enum.TextXAlignment.Center; axLbl.ZIndex=51
-			local minus=Instance.new("TextButton",panel); minus.Size=UDim2.new(0,14,0,16); minus.Position=UDim2.new(0,colX,0,rowY+10)
-			minus.BackgroundColor3=C.CARD2; minus.BorderSizePixel=0; minus.Text="-"; minus.TextColor3=axColor
-			minus.Font=Enum.Font.GothamBlack; minus.TextSize=13; minus.ZIndex=52; addCorner(minus,3)
-			local tb=Instance.new("TextBox",panel); tb.Size=UDim2.new(0,18,0,16); tb.Position=UDim2.new(0,colX+14,0,rowY+10)
-			tb.BackgroundColor3=Color3.fromRGB(16,12,28); tb.BorderSizePixel=0; tb.Text=tostring(off[axis]); tb.TextColor3=C.WHITE
-			tb.Font=Enum.Font.GothamBold; tb.TextSize=8; tb.ClearTextOnFocus=false; tb.ZIndex=52; addCorner(tb,3); addStroke(tb,axColor,1,0.6)
-			local plus=Instance.new("TextButton",panel); plus.Size=UDim2.new(0,14,0,16); plus.Position=UDim2.new(0,colX+32,0,rowY+10)
-			plus.BackgroundColor3=C.CARD2; plus.BorderSizePixel=0; plus.Text="+"; plus.TextColor3=axColor
-			plus.Font=Enum.Font.GothamBlack; plus.TextSize=13; plus.ZIndex=52; addCorner(plus,3)
+			local axColor=AX_COLORS[j]
+			local rowY = CONTENT_Y + 20 + (j-1)*(ROW_H+4)
+
+			-- Carte axe (style C.CARD comme les toggle rows)
+			local card=Instance.new("Frame",panel)
+			card.Size=UDim2.new(0,COL_W,0,ROW_H); card.Position=UDim2.new(0,colX,0,rowY)
+			card.BackgroundColor3=C.CARD; card.BorderSizePixel=0; card.ZIndex=52
+			addCorner(card,7); addStroke(card,C.BORDER,1,0.35)
+
+			-- Axe label
+			local axLbl=Instance.new("TextLabel",card)
+			axLbl.Size=UDim2.new(1,0,0,11); axLbl.Position=UDim2.new(0,0,0,2)
+			axLbl.BackgroundTransparency=1; axLbl.Text=axis:upper()
+			axLbl.Font=Enum.Font.GothamBlack; axLbl.TextSize=9; axLbl.TextColor3=axColor
+			axLbl.TextXAlignment=Enum.TextXAlignment.Center; axLbl.ZIndex=53
+
+			-- Minus
+			local minus=Instance.new("TextButton",card)
+			minus.Size=UDim2.new(0,16,0,16); minus.Position=UDim2.new(0,2,1,-18)
+			minus.BackgroundColor3=Color3.fromRGB(22,18,38); minus.BorderSizePixel=0
+			minus.Text="-"; minus.TextColor3=axColor
+			minus.Font=Enum.Font.GothamBlack; minus.TextSize=13; minus.ZIndex=54
+			addCorner(minus,4)
+
+			-- Value
+			local tb=Instance.new("TextBox",card)
+			tb.Size=UDim2.new(0,COL_W-36,0,16); tb.Position=UDim2.new(0,18,1,-18)
+			tb.BackgroundColor3=C.ON_BG; tb.BorderSizePixel=0
+			tb.Text=tostring(off[axis]); tb.TextColor3=C.ACCENT2
+			tb.Font=Enum.Font.GothamBold; tb.TextSize=9; tb.ClearTextOnFocus=false; tb.ZIndex=54
+			addCorner(tb,4); addStroke(tb,axColor,1,0.5)
+
+			-- Plus
+			local plus=Instance.new("TextButton",card)
+			plus.Size=UDim2.new(0,16,0,16); plus.Position=UDim2.new(1,-18,1,-18)
+			plus.BackgroundColor3=Color3.fromRGB(8,22,10); plus.BorderSizePixel=0
+			plus.Text="+"; plus.TextColor3=C.GREEN
+			plus.Font=Enum.Font.GothamBlack; plus.TextSize=13; plus.ZIndex=54
+			addCorner(plus,4)
+
 			local function applyVal(v)
 				local n=tonumber(v); if not n then return end
 				off[axis]=math.floor(n*10)/10; tb.Text=tostring(off[axis])
@@ -2100,59 +2064,6 @@ end
 -- TAB 2 : TELEPORT
 -- ============================================================
 do
-	-- Auto TP button (custom, shows side)
-	local pg = tabPages[2]
-	local tpRow = Instance.new("Frame", pg)
-	tpRow.Size = UDim2.new(1, 0, 0, 34)
-	tpRow.BackgroundColor3 = C.CARD; tpRow.BorderSizePixel=0
-	addCorner(tpRow, 7); addStroke(tpRow, C.BORDER, 1, 0.3)
-	local xOff = 8
-	if not G.isMobile then
-		local badge = makeKbBadge(tpRow, "AutoTP")
-		if badge then badge.Position = UDim2.new(0,6,0.5,-8); xOff=34 end
-	end
-	-- side badge
-	local sideBadge = Instance.new("Frame", tpRow)
-	sideBadge.Size = UDim2.new(0, 38, 0, 18); sideBadge.Position = UDim2.new(0, xOff, 0.5, -9)
-	sideBadge.BackgroundColor3 = C.ACCENT; sideBadge.BorderSizePixel=0; addCorner(sideBadge, 4)
-	local sideBadgeLbl = Instance.new("TextLabel", sideBadge)
-	sideBadgeLbl.Size = UDim2.new(1,0,1,0); sideBadgeLbl.BackgroundTransparency=1
-	sideBadgeLbl.Text="?"; sideBadgeLbl.TextColor3=Color3.fromRGB(255,255,255)
-	sideBadgeLbl.Font=Enum.Font.GothamBlack; sideBadgeLbl.TextSize=9
-	local tpLbl = Instance.new("TextLabel", tpRow)
-	tpLbl.Size = UDim2.new(1, -(xOff+50), 1, 0); tpLbl.Position = UDim2.new(0, xOff+44, 0, 0)
-	tpLbl.BackgroundTransparency=1; tpLbl.Text="Auto TP"
-	tpLbl.TextColor3=C.WHITE; tpLbl.Font=Enum.Font.GothamBold; tpLbl.TextSize=11; tpLbl.TextXAlignment=Enum.TextXAlignment.Left
-	local tpActive = false
-	local tpPill, tpCircle = makeTogglePill(tpRow, false)
-	tpPill.Position = UDim2.new(1,-38,0.5,-8)
-	local function updateTPBtn()
-		local side = G_myPlotSide
-		sideBadgeLbl.Text = side=="left" and "LEFT" or side=="right" and "RIGHT" or "?"
-		sideBadge.BackgroundColor3 = side=="left" and Color3.fromRGB(40,100,220) or side=="right" and Color3.fromRGB(180,60,40) or C.ACCENT
-		tpRow.BackgroundColor3 = tpActive and C.ON_BG or C.CARD
-		tpLbl.TextColor3 = tpActive and C.ACCENT2 or C.WHITE
-		setPillState(tpPill, tpCircle, tpActive)
-	end
-	updateTPBtn()
-	G_tpAutoBtn = tpLbl; G_updateTPBtn = updateTPBtn
-	G.tpAutoSetVisual = function(on) tpActive=on; G_tpAutoEnabled=on; updateTPBtn() end
-	local tpClickBtn = Instance.new("TextButton", tpRow)
-	tpClickBtn.Size=UDim2.new(1,0,1,0); tpClickBtn.BackgroundTransparency=1; tpClickBtn.Text=""; tpClickBtn.ZIndex=4
-	tpClickBtn.MouseButton1Click:Connect(function()
-		if G.waitingForKey then return end
-		tpActive = not tpActive; G_tpAutoEnabled = tpActive
-		task.spawn(function() refreshMyPlotSide() end)
-		updateTPBtn()
-	end)
-	G.brainrotLeftBtn = function(on) if G_myPlotSide=="left" then tpActive=on; G_tpAutoEnabled=on; updateTPBtn() end end
-	G.brainrotRightBtn = function(on) if G_myPlotSide=="right" then tpActive=on; G_tpAutoEnabled=on; updateTPBtn() end end
-
-	-- Auto Play after TP
-	local aptp_v, _ = makeToggleRow(2, "Auto Play after TP", nil, function(on)
-		G_autoPlayAfterTP = on
-	end)
-
 	-- Drop Brainrot
 	makeActionRow(2, "Drop Brainrot", "DropBrainrot", function() runDrop() end)
 
@@ -2316,30 +2227,80 @@ do
 end
 
 -- ============================================================
--- TOGGLE BUTTON (reopen)
+-- TOGGLE BUTTON (reopen) — carré avec logo A + lueur violette tournante
 -- ============================================================
-local toggleBtn = Instance.new("TextButton", gui)
-toggleBtn.Size = UDim2.new(0, 110, 0, 26)
-toggleBtn.Position = UDim2.new(0, 16, 0, 26)
-toggleBtn.BackgroundColor3 = Color3.fromRGB(50, 20, 100)
-toggleBtn.BackgroundTransparency = 0.05
+local toggleBtn = Instance.new("Frame", gui)
+toggleBtn.Size = UDim2.new(0, 52, 0, 52)
+toggleBtn.Position = UDim2.new(0, 16, 0, 16)
+toggleBtn.BackgroundColor3 = Color3.fromRGB(12, 8, 24)
+toggleBtn.BackgroundTransparency = 0
 toggleBtn.BorderSizePixel = 0
-toggleBtn.Text = "◉  AXYRDUEL"
-toggleBtn.TextColor3 = C.ACCENT2
-toggleBtn.Font = Enum.Font.GothamBlack
-toggleBtn.TextSize = 11
 toggleBtn.ZIndex = 20
 toggleBtn.Visible = false
-addCorner(toggleBtn, 7)
-addStroke(toggleBtn, C.ACCENT, 1.5, 0.1)
+toggleBtn.Active = true
+addCorner(toggleBtn, 10)
+
+-- Glow ring (lueur violette tournante via rotation de gradient)
+local glowFrame = Instance.new("Frame", toggleBtn)
+glowFrame.Size = UDim2.new(1, 10, 1, 10)
+glowFrame.Position = UDim2.new(0, -5, 0, -5)
+glowFrame.BackgroundTransparency = 1
+glowFrame.BorderSizePixel = 0
+glowFrame.ZIndex = 19
+
+local glowStroke = Instance.new("UIStroke", toggleBtn)
+glowStroke.Color = C.ACCENT
+glowStroke.Thickness = 2
+glowStroke.Transparency = 0.0
+
+-- Logo image
+local logoLbl = Instance.new("ImageLabel", toggleBtn)
+logoLbl.Size = UDim2.new(0, 36, 0, 36)
+logoLbl.Position = UDim2.new(0.5, -18, 0.5, -18)
+logoLbl.BackgroundTransparency = 1
+logoLbl.Image = "rbxassetid://82366739497561"
+logoLbl.ScaleType = Enum.ScaleType.Fit
+logoLbl.ZIndex = 21
+
+-- Bouton invisible par-dessus pour capter les clics
+local toggleBtnClick = Instance.new("TextButton", toggleBtn)
+toggleBtnClick.Size = UDim2.new(1, 0, 1, 0)
+toggleBtnClick.BackgroundTransparency = 1
+toggleBtnClick.BorderSizePixel = 0
+toggleBtnClick.Text = ""
+toggleBtnClick.ZIndex = 22
+
+-- Animation lueur tournante
+local _glowAngle = 0
+local _glowConn = nil
+local function startGlowAnim()
+	if _glowConn then return end
+	_glowConn = RunService.RenderStepped:Connect(function(dt)
+		if not toggleBtn.Visible then return end
+		_glowAngle = (_glowAngle + dt * 120) % 360
+		local t = math.abs(math.sin(math.rad(_glowAngle)))
+		glowStroke.Color = Color3.fromRGB(
+			math.floor(80 + t * 80),
+			math.floor(20 + t * 20),
+			math.floor(180 + t * 75)
+		)
+		glowStroke.Transparency = 0.1 + (1 - t) * 0.5
+	end)
+end
+local function stopGlowAnim()
+	if _glowConn then _glowConn:Disconnect(); _glowConn = nil end
+end
 
 closeBtn.MouseButton1Click:Connect(function()
 	main.Visible = false; toggleBtn.Visible = true
+	startGlowAnim()
 end)
-toggleBtn.MouseButton1Click:Connect(function()
+toggleBtnClick.MouseButton1Click:Connect(function()
 	main.Visible = not main.Visible
-	toggleBtn.Text = main.Visible and "◉  AXYRDUEL" or "◎  AXYRDUEL"
-	toggleBtn.TextColor3 = main.Visible and C.ACCENT2 or C.DIM
+	if main.Visible then
+		toggleBtn.Visible = false
+		stopGlowAnim()
+	end
 end)
 
 -- ============================================================
@@ -2531,40 +2492,15 @@ do
 	local YS = BTN_H + 8  -- espacement vertical
 
 	-- ---- GAUCHE ----
-	-- Photo : Track Player (haut), Float (milieu)
-	local trackSideV = makeFloatingBtn(LX, Y0,           "TRACK PLAYER", "AutoTP",       C.ACCENT2, function(on)
-		G_tpAutoEnabled = on
-		task.spawn(function() refreshMyPlotSide() end)
-		if G.tpAutoSetVisual then G.tpAutoSetVisual(on) end
-		-- Track Player active/désactive aussi le Bat Aimbot
+	-- BAT AIMBOT (remplace TRACK PLAYER)
+	local batSideV = makeFloatingBtn(LX, Y0, "BAT AIMBOT", "AutoBat", C.ACCENT2, function(on)
 		G.autoBatEnabled = on
 		if on then
 			if G.autoPlayLeftEnabled or G.autoPlayRightEnabled then disableAllAutoPlay() end
 		end
 		if G.autoBatSetVisual then G.autoBatSetVisual(on) end
 	end, true)
-	-- Badge touche Bat Aimbot visible à côté du bouton Track Player
-	do
-		local trackFrame = gui:FindFirstChild("FloatBtn_TRACK PLAYER")
-		if trackFrame then
-			local batKeyBadge = Instance.new("TextLabel", trackFrame)
-			batKeyBadge.Name = "BatKeyBadge"
-			batKeyBadge.Size = UDim2.new(0, KB_W - 2, 0, 18)
-			batKeyBadge.Position = UDim2.new(1, -KB_W + 1, 0, BTN_H - 22)
-			batKeyBadge.BackgroundColor3 = Color3.fromRGB(22, 14, 44)
-			batKeyBadge.BorderSizePixel = 0
-			batKeyBadge.Text = getKeyName(KB.AutoBat)
-			batKeyBadge.TextColor3 = C.ORANGE
-			batKeyBadge.Font = Enum.Font.GothamBold
-			batKeyBadge.TextSize = 10
-			batKeyBadge.TextXAlignment = Enum.TextXAlignment.Center
-			batKeyBadge.ZIndex = 33
-			addCorner(batKeyBadge, 3)
-			addStroke(batKeyBadge, C.ORANGE, 1, 0.4)
-			G.allBadges["AutoBatSide"] = batKeyBadge
-		end
-	end
-	local floatSideV = makeFloatingBtn(LX, Y0 + YS,      "FLOAT",        "FloatToggle",  C.ACCENT2, function(on)
+	local floatSideV = makeFloatingBtn(LX, Y0 + YS,      "FLOAT",    "FloatToggle",  C.ACCENT2, function(on)
 		G.floatEnabled = on
 		if on then startFloat() else stopFloat() end
 		if G.floatSetVisual then G.floatSetVisual(on) end
@@ -2608,8 +2544,8 @@ do
 	local _oFloat = G.floatSetVisual
 	G.floatSetVisual = function(s) if _oFloat then _oFloat(s) end; floatSideV(s) end
 
-	local _oTP = G.tpAutoSetVisual
-	G.tpAutoSetVisual = function(s) if _oTP then _oTP(s) end; trackSideV(s) end
+	local _oBat = G.autoBatSetVisual
+	G.autoBatSetVisual = function(s) if _oBat then _oBat(s) end; batSideV(s) end
 
 	local _oAPL = G.autoPlayLeftSetVisual
 	G.autoPlayLeftSetVisual = function(s) if _oAPL then _oAPL(s) end; aplSideV(s) end
@@ -2869,6 +2805,11 @@ local function loadConfig()
 		if G.optimizerSetVisual then G.optimizerSetVisual(G.optimizerEnabled) end
 		if G.ultraModeSetVisual then G.ultraModeSetVisual(G.ultraModeEnabled) end
 		if G.removeAccSetVisual then G.removeAccSetVisual(G.removeAccessoriesEnabled) end
+		-- Repositionner les boutons flottants à leur dernière position sauvegardée
+		for lbl, pos in pairs(G.floatBtnPositions) do
+			local f = gui:FindFirstChild("FloatBtn_"..lbl)
+			if f then f.Position = UDim2.new(0, pos.x, 0, pos.y) end
+		end
 	end)
 end
 loadConfig()
